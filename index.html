@@ -2,409 +2,544 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тетрис на JavaScript</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Тетрис – Онлайн лидерборд</title>
+    
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB6eJyhjPPDSnREaDNkZc9VquG9E2-zuG8",
+            authDomain: "click-74bb1.firebaseapp.com",
+            projectId: "click-74bb1",
+            storageBucket: "click-74bb1.firebasestorage.app",
+            messagingSenderId: "166261606223",
+            appId: "1:166261606223:web:5e7b7f0ddd09065d92e73a"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        window.FIREBASE_DB = db;
+        window.FirebaseModules = { collection, addDoc, query, orderBy, limit, onSnapshot };
+        console.log('✅ Firebase подключён!');
+    </script>
+
     <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
         body {
-            background-color: #1a1a2e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            font-family: 'Arial', sans-serif;
-            color: white;
-        }
-        .game-container {
-            display: flex;
-            gap: 20px;
-            align-items: flex-start;
-        }
-        canvas {
-            border: 2px solid #16213e;
-            background-color: #0f0f1e;
-        }
-        .side-panel {
+            background-color: #0a0a1a;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            margin: 0;
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            color: white;
+            padding: 10px;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
-        .next-piece {
-            text-align: center;
-        }
-        .score {
+
+        /* Шапка с ником */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 350px;
+            padding: 8px 12px;
             background: #16213e;
-            padding: 15px;
-            border-radius: 8px;
-            min-width: 120px;
-        }
-        .score h3 {
-            margin: 0 0 10px 0;
-            color: #e94560;
-        }
-        .controls {
-            background: #16213e;
-            padding: 15px;
-            border-radius: 8px;
+            border-radius: 12px;
+            margin-bottom: 10px;
             font-size: 14px;
         }
-        .controls p {
-            margin: 8px 0;
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .player-icon { font-size: 20px; }
+        .player-name { font-weight: bold; color: #f5c542; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-small {
+            background: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-small:active { background: #1a4a8a; }
+        .btn-leaders {
+            background: #e94560;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(233,69,96,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(233,69,96,0); }
+        }
+
+        /* Модальные окна */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #16213e;
+            border-radius: 20px;
+            padding: 25px 20px;
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 1px solid #0f3460;
+        }
+        .modal h3 { margin: 0 0 15px 0; color: #e94560; font-size: 22px; }
+        .modal input {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 2px solid #0f3460;
+            background: #0a0a1a;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 15px;
+            outline: none;
+        }
+        .modal input:focus { border-color: #e94560; }
+        .btn-big {
+            width: 100%;
+            padding: 14px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-big:active { background: #c73b54; }
+
+        /* Таблица лидеров */
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+            max-height: 350px;
+            overflow-y: auto;
+        }
+        .leaderboard-list li {
+            padding: 10px 12px;
+            margin: 4px 0;
+            background: #0a0a1a;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        .lb-rank { font-weight: bold; color: #f5c542; margin-right: 8px; }
+        .lb-name { flex: 1; }
+        .lb-score-big { font-weight: bold; color: #4e9af1; }
+
+        /* Игровое поле */
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            max-width: 350px;
+            width: 100%;
+        }
+        .score-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            background: #16213e;
+            padding: 10px 15px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+        .score-bar .label { color: #888; }
+        .score-bar .value { font-weight: bold; color: #f5c542; }
+
+        canvas#tetris {
+            border: 2px solid #0f3460;
+            background-color: #0f0f1e;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            aspect-ratio: 1/2;
+        }
+
+        .next-piece-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .next-label { font-size: 12px; color: #888; }
+        canvas#next {
+            width: 80px;
+            height: 80px;
+            background: #0f0f1e;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+        }
+
+        /* Кнопки управления */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 8px;
+            width: 100%;
+            max-width: 300px;
+            margin-top: 5px;
+        }
+        .ctrl-btn {
+            background: #16213e;
+            color: white;
+            border: 2px solid #0f3460;
+            border-radius: 14px;
+            font-size: 30px;
+            padding: 14px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ctrl-btn:active { background: #0f3460; transform: scale(0.95); }
+        .empty { visibility: hidden; }
+        .btn-hard-drop {
+            background: #e94560;
+            border-color: #e94560;
+            font-size: 18px;
+            font-weight: bold;
+            grid-column: span 3;
+        }
+
+        /* Адаптация */
+        @media (max-width: 400px) {
+            canvas#tetris { max-width: 280px; }
+            .ctrl-btn { font-size: 26px; padding: 12px 0; }
+            .header { font-size: 12px; }
         }
     </style>
 </head>
 <body>
-    <div class="game-container">
+
+    <!-- Модальное окно: Ввод ника -->
+    <div class="modal-overlay" id="nicknameModal">
+        <div class="modal">
+            <h3>🎮 Как тебя зовут?</h3>
+            <input type="text" id="nicknameInput" placeholder="Введи ник" maxlength="15" autocomplete="off">
+            <button class="btn-big" id="btnSaveNickname">Играть!</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно: Лидерборд -->
+    <div class="modal-overlay" id="leaderboardModal">
+        <div class="modal">
+            <h3>🏆 Лучшие игроки</h3>
+            <ul class="leaderboard-list" id="leaderboardList">
+                <li style="justify-content:center;color:#888;">Загрузка...</li>
+            </ul>
+            <button class="btn-big" id="btnCloseLeaderboard" style="margin-top:15px;background:#0f3460;">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Интерфейс игры -->
+    <div class="game-container" id="gameUI">
+        <!-- Шапка -->
+        <div class="header">
+            <div class="player-info">
+                <span class="player-icon">👤</span>
+                <span class="player-name" id="currentNickname">Игрок</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn-small" id="btnChangeNickname">Сменить</button>
+                <button class="btn-small btn-leaders" id="btnShowLeaders">🏆 Лидеры</button>
+            </div>
+        </div>
+
+        <!-- Счёт -->
+        <div class="score-bar">
+            <div><span class="label">Счёт:</span> <span class="value" id="scoreValue">0</span></div>
+            <div><span class="label">Ур:</span> <span class="value" id="levelValue">1</span></div>
+            <div><span class="label">Лин:</span> <span class="value" id="linesValue">0</span></div>
+        </div>
+
+        <!-- Следующая фигура -->
+        <div class="next-piece-row">
+            <span class="next-label">Следующая:</span>
+            <canvas id="next" width="80" height="80"></canvas>
+        </div>
+
+        <!-- Игровое поле -->
         <canvas id="tetris" width="300" height="600"></canvas>
-        <div class="side-panel">
-            <div class="next-piece">
-                <h3>Следующая</h3>
-                <canvas id="next" width="120" height="120"></canvas>
-            </div>
-            <div class="score">
-                <h3>Счёт: <span id="scoreValue">0</span></h3>
-                <p>Уровень: <span id="levelValue">1</span></p>
-                <p>Линий: <span id="linesValue">0</span></p>
-            </div>
-            <div class="controls">
-                <p>← → двигать</p>
-                <p>↓ вниз</p>
-                <p>↑ поворот</p>
-                <p>Пробел – сброс</p>
-            </div>
+
+        <!-- Кнопки управления -->
+        <div class="controls">
+            <button class="ctrl-btn" id="btnLeft">⬅</button>
+            <button class="ctrl-btn" id="btnRotate">🔄</button>
+            <button class="ctrl-btn" id="btnRight">➡</button>
+            <div class="empty"></div>
+            <button class="ctrl-btn" id="btnDown">⬇</button>
+            <div class="empty"></div>
+            <button class="ctrl-btn btn-hard-drop" id="btnHardDrop">⏬ СБРОС</button>
         </div>
     </div>
 
     <script>
-        // ========== КОНСТАНТЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
-        const COLS = 10;
-        const ROWS = 20;
-        const BLOCK_SIZE = 30; // пикселей
-        const COLORS = [
-            '#0f0f1e', // фон
-            '#e94560', // I - красный
-            '#f5c542', // O - жёлтый
-            '#4e9af1', // T - синий
-            '#6f42c1', // S - фиолетовый
-            '#2ecc71', // Z - зелёный
-            '#e67e22', // J - оранжевый
-            '#1abc9c'  // L - бирюзовый
-        ];
+        // ========== НИКНЕЙМ ==========
+        let playerNickname = '';
+        const nicknameModal = document.getElementById('nicknameModal');
+        const nicknameInput = document.getElementById('nicknameInput');
+        const currentNicknameSpan = document.getElementById('currentNickname');
+        const storageNameKey = 'tetris_nickname';
 
-        // Фигуры (тетромино) – классические формы
+        function getSavedNickname() {
+            return localStorage.getItem(storageNameKey) || '';
+        }
+        function saveNickname(name) {
+            localStorage.setItem(storageNameKey, name);
+            playerNickname = name;
+            currentNicknameSpan.textContent = name;
+        }
+
+        function showNicknameModal() {
+            nicknameModal.classList.add('active');
+            nicknameInput.value = getSavedNickname();
+            nicknameInput.focus();
+        }
+        function hideNicknameModal() {
+            nicknameModal.classList.remove('active');
+        }
+
+        // Если ник уже есть - не показываем модалку при загрузке
+        window.addEventListener('load', () => {
+            const saved = getSavedNickname();
+            if (saved) {
+                playerNickname = saved;
+                currentNicknameSpan.textContent = saved;
+                if (window.FIREBASE_DB) startGame();
+            } else {
+                showNicknameModal();
+            }
+        });
+
+        document.getElementById('btnSaveNickname').addEventListener('click', () => {
+            let name = nicknameInput.value.trim();
+            if (!name) name = 'Игрок_' + Math.floor(Math.random() * 1000);
+            saveNickname(name);
+            hideNicknameModal();
+            if (!window.FIREBASE_DB) {
+                alert('Firebase не загружен. Обнови страницу.');
+                return;
+            }
+            startGame();
+        });
+
+        document.getElementById('btnChangeNickname').addEventListener('click', () => {
+            showNicknameModal();
+        });
+
+        // ========== МОДАЛКА ЛИДЕРБОРДА ==========
+        const leaderboardModal = document.getElementById('leaderboardModal');
+        const leaderboardListEl = document.getElementById('leaderboardList');
+
+        document.getElementById('btnShowLeaders').addEventListener('click', () => {
+            leaderboardModal.classList.add('active');
+        });
+        document.getElementById('btnCloseLeaderboard').addEventListener('click', () => {
+            leaderboardModal.classList.remove('active');
+        });
+
+        leaderboardModal.addEventListener('click', (e) => {
+            if (e.target === leaderboardModal) leaderboardModal.classList.remove('active');
+        });
+        nicknameModal.addEventListener('click', (e) => {
+            // Не даём закрыть модалку ника кликом мимо (пока ник не введён)
+        });
+
+        // ========== FIREBASE ==========
+        const { collection, addDoc, query, orderBy, limit, onSnapshot } = window.FirebaseModules || {};
+        let db = null;
+
+        function initFirebase() {
+            db = window.FIREBASE_DB;
+            initLeaderboard();
+        }
+
+        function initLeaderboard() {
+            if (!db) return;
+            const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
+            onSnapshot(q, (snapshot) => {
+                const entries = [];
+                snapshot.forEach(doc => entries.push({ id: doc.id, ...doc.data() }));
+                renderLeaderboardInModal(entries);
+            }, (error) => {
+                leaderboardListEl.innerHTML = '<li style="justify-content:center;color:orange;">Ошибка загрузки</li>';
+            });
+        }
+
+        function renderLeaderboardInModal(entries) {
+            leaderboardListEl.innerHTML = '';
+            if (entries.length === 0) {
+                leaderboardListEl.innerHTML = '<li style="justify-content:center;">Пока пусто. Сыграй! 🎮</li>';
+                return;
+            }
+            entries.forEach((entry, index) => {
+                const li = document.createElement('li');
+                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                li.innerHTML = `
+                    <span class="lb-rank">${medal} ${index + 1}.</span>
+                    <span class="lb-name">${entry.name}</span>
+                    <span class="lb-score-big">${entry.score.toLocaleString()}</span>
+                `;
+                leaderboardListEl.appendChild(li);
+            });
+        }
+
+        async function addScoreToLeaderboard(name, score, level, lines) {
+            if (!db) return;
+            try {
+                await addDoc(collection(db, 'leaderboard'), {
+                    name: name || 'Аноним',
+                    score, level, lines,
+                    date: new Date().toLocaleDateString('ru-RU'),
+                    timestamp: Date.now()
+                });
+            } catch (e) {
+                console.error('Ошибка сохранения:', e);
+            }
+        }
+
+        // ========== ИГРА ==========
+        const COLS = 10, ROWS = 20, BLOCK_SIZE = 30;
+        const COLORS = ['#0f0f1e','#e94560','#f5c542','#4e9af1','#6f42c1','#2ecc71','#e67e22','#1abc9c'];
         const TETROMINOS = [
-            // I
-            [[1,1,1,1]],
-            // O
-            [[1,1],
-             [1,1]],
-            // T
-            [[0,1,0],
-             [1,1,1]],
-            // S
-            [[0,1,1],
-             [1,1,0]],
-            // Z
-            [[1,1,0],
-             [0,1,1]],
-            // J
-            [[1,0,0],
-             [1,1,1]],
-            // L
-            [[0,0,1],
-             [1,1,1]]
+            [[1,1,1,1]], [[1,1],[1,1]], [[0,1,0],[1,1,1]],
+            [[0,1,1],[1,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[0,0,1],[1,1,1]]
         ];
 
-        let board = [];                // матрица ROWS x COLS, 0 пусто, >0 цвет
-        let currentPiece = null;      // { matrix, colorIndex, x, y }
-        let nextPiece = null;
-        let gameOver = false;
-        let score = 0;
-        let linesCleared = 0;
-        let level = 1;
-        let dropInterval = 500;       // мс
-        let lastDropTime = 0;
+        let board, currentPiece, nextPiece, gameOver = false;
+        let score = 0, linesCleared = 0, level = 1;
+        let dropInterval = 500, lastDropTime = 0;
+        let leaderboardSaved = false;
+        let gameStarted = false;
 
-        // DOM элементы
         const canvas = document.getElementById('tetris');
         const ctx = canvas.getContext('2d');
         const nextCanvas = document.getElementById('next');
         const nextCtx = nextCanvas.getContext('2d');
-
         const scoreSpan = document.getElementById('scoreValue');
         const levelSpan = document.getElementById('levelValue');
         const linesSpan = document.getElementById('linesValue');
 
-        // ========== ФУНКЦИИ ==========
-
-        // Инициализация / сброс игры
         function init() {
             board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
             gameOver = false;
-            score = 0;
-            linesCleared = 0;
-            level = 1;
-            dropInterval = 500;
-            lastDropTime = 0;
+            leaderboardSaved = false;
+            score = 0; linesCleared = 0; level = 1;
+            dropInterval = 500; lastDropTime = 0;
             updateStats();
-
-            // Создаём первую и следующую фигуры
             nextPiece = randomPiece();
             spawnPiece();
         }
 
-        // Создать случайную фигуру
         function randomPiece() {
             const idx = Math.floor(Math.random() * TETROMINOS.length);
-            const matrix = TETROMINOS[idx].map(row => [...row]);
-            const colorIndex = idx + 1; // первый цвет зарезервирован для фона
-            return { matrix, colorIndex };
+            return { matrix: TETROMINOS[idx].map(r => [...r]), colorIndex: idx + 1 };
         }
 
-        // Поместить новую фигуру на поле
         function spawnPiece() {
-            if (!nextPiece) {
-                nextPiece = randomPiece();
-            }
-            currentPiece = {
-                matrix: nextPiece.matrix.map(row => [...row]),
-                colorIndex: nextPiece.colorIndex,
-                x: Math.floor((COLS - nextPiece.matrix[0].length) / 2),
-                y: 0
-            };
+            if (!nextPiece) nextPiece = randomPiece();
+            currentPiece = { matrix: nextPiece.matrix.map(r => [...r]), colorIndex: nextPiece.colorIndex, x: Math.floor((COLS - nextPiece.matrix[0].length) / 2), y: 0 };
             nextPiece = randomPiece();
-
-            // Если новую фигуру сразу некуда поставить — игра окончена
             if (!isValidPosition(currentPiece.matrix, currentPiece.x, currentPiece.y)) {
                 gameOver = true;
+                if (!leaderboardSaved) {
+                    leaderboardSaved = true;
+                    setTimeout(() => {
+                        addScoreToLeaderboard(playerNickname, score, level, linesCleared);
+                        alert(`Игра окончена! Твой счёт: ${score}\nРезультат сохранён в лидерборде.`);
+                    }, 200);
+                }
             }
         }
 
-        // Проверка, может ли фигура находиться в заданной позиции
-        function isValidPosition(matrix, posX, posY) {
-            for (let row = 0; row < matrix.length; row++) {
-                for (let col = 0; col < matrix[row].length; col++) {
-                    if (matrix[row][col] !== 0) {
-                        const boardX = posX + col;
-                        const boardY = posY + row;
-                        // Выход за границы или наложение на занятую клетку
-                        if (boardX < 0 || boardX >= COLS ||
-                            boardY >= ROWS ||
-                            (boardY >= 0 && board[boardY][boardX] !== 0)) {
-                            return false;
-                        }
+        function isValidPosition(matrix, px, py) {
+            for (let r = 0; r < matrix.length; r++)
+                for (let c = 0; c < matrix[r].length; c++)
+                    if (matrix[r][c] !== 0) {
+                        const bx = px + c, by = py + r;
+                        if (bx < 0 || bx >= COLS || by >= ROWS || (by >= 0 && board[by][bx] !== 0)) return false;
                     }
-                }
-            }
             return true;
         }
 
-        // Зафиксировать текущую фигуру на доске
         function lockPiece() {
             const { matrix, x, y, colorIndex } = currentPiece;
-            for (let row = 0; row < matrix.length; row++) {
-                for (let col = 0; col < matrix[row].length; col++) {
-                    if (matrix[row][col] !== 0) {
-                        const boardY = y + row;
-                        const boardX = x + col;
-                        if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
-                            board[boardY][boardX] = colorIndex;
-                        }
+            for (let r = 0; r < matrix.length; r++)
+                for (let c = 0; c < matrix[r].length; c++)
+                    if (matrix[r][c] !== 0) {
+                        const by = y + r, bx = x + c;
+                        if (by >= 0 && by < ROWS && bx >= 0 && bx < COLS) board[by][bx] = colorIndex;
                     }
-                }
-            }
-            // Удалить заполненные линии
             clearFullRows();
-            // Создать новую фигуру
             spawnPiece();
         }
 
-        // Удаление заполненных линий и начисление очков
         function clearFullRows() {
-            let linesRemoved = 0;
-            for (let row = ROWS - 1; row >= 0; row--) {
-                if (board[row].every(cell => cell !== 0)) {
-                    // Удаляем строку
-                    board.splice(row, 1);
-                    board.unshift(new Array(COLS).fill(0));
-                    row++; // проверить ту же позицию после смещения
-                    linesRemoved++;
+            let removed = 0;
+            for (let r = ROWS - 1; r >= 0; r--) {
+                if (board[r].every(cell => cell !== 0)) {
+                    board.splice(r, 1); board.unshift(new Array(COLS).fill(0));
+                    r++; removed++;
                 }
             }
-
-            if (linesRemoved > 0) {
-                linesCleared += linesRemoved;
-                // Начисление очков
-                const pointsMap = [0, 100, 300, 500, 800];
-                score += pointsMap[linesRemoved] * level;
-                // Обновление уровня (каждые 1000 очков)
-                const newLevel = Math.floor(score / 1000) + 1;
-                if (newLevel > level) {
-                    level = newLevel;
-                    dropInterval = Math.max(50, 500 - (level - 1) * 50);
-                }
+            if (removed > 0) {
+                linesCleared += removed;
+                score += [0,100,300,500,800][removed] * level;
+                const nl = Math.floor(score/1000)+1;
+                if (nl > level) { level = nl; dropInterval = Math.max(50, 500 - (level-1)*50); }
                 updateStats();
             }
         }
 
-        // Движение фигуры влево/вправо/вниз
         function movePiece(dx, dy) {
             if (!currentPiece || gameOver) return false;
-            const newX = currentPiece.x + dx;
-            const newY = currentPiece.y + dy;
-            if (isValidPosition(currentPiece.matrix, newX, newY)) {
-                currentPiece.x = newX;
-                currentPiece.y = newY;
-                return true;
-            }
-            // Если движение вниз невозможно — фиксируем фигуру
-            if (dy === 1) {
-                lockPiece();
-            }
+            const nx = currentPiece.x + dx, ny = currentPiece.y + dy;
+            if (isValidPosition(currentPiece.matrix, nx, ny)) { currentPiece.x = nx; currentPiece.y = ny; return true; }
+            if (dy === 1) lockPiece();
             return false;
         }
 
-        // Поворот фигуры (по часовой стрелке)
         function rotatePiece() {
             if (!currentPiece || gameOver) return;
-            const matrix = currentPiece.matrix;
-            // Транспонирование + реверс строк = поворот на 90°
-            const rotated = matrix[0].map((_, idx) => matrix.map(row => row[idx]).reverse());
-            if (isValidPosition(rotated, currentPiece.x, currentPiece.y)) {
-                currentPiece.matrix = rotated;
-            }
-            // Иначе — поворот не выполняется (нет места)
-        }
-
-        // Мгновенное падение (hard drop)
-        function hardDrop() {
-            if (!currentPiece || gameOver) return;
-            while (isValidPosition(currentPiece.matrix, currentPiece.x, currentPiece.y + 1)) {
-                currentPiece.y++;
-            }
-            lockPiece();
-        }
-
-        // Обновить счёт/уровень/линии на экране
-        function updateStats() {
-            scoreSpan.textContent = score;
-            levelSpan.textContent = level;
-            linesSpan.textContent = linesCleared;
-        }
-
-        // ========== ОТРИСОВКА ==========
-        function drawBoard() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Сетка
-            for (let row = 0; row < ROWS; row++) {
-                for (let col = 0; col < COLS; col++) {
-                    const colorIndex = board[row][col];
-                    ctx.fillStyle = COLORS[colorIndex];
-                    ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
-                }
-            }
-
-            // Текущая фигура
-            if (currentPiece && !gameOver) {
-                const { matrix, x, y, colorIndex } = currentPiece;
-                for (let row = 0; row < matrix.length; row++) {
-                    for (let col = 0; col < matrix[row].length; col++) {
-                        if (matrix[row][col] !== 0) {
-                            ctx.fillStyle = COLORS[colorIndex];
-                            const drawX = (x + col) * BLOCK_SIZE;
-                            const drawY = (y + row) * BLOCK_SIZE;
-                            ctx.fillRect(drawX, drawY, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
-                        }
-                    }
-                }
-            }
-
-            // Затемнение экрана при game over
-            if (gameOver) {
-                ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#e94560';
-                ctx.font = 'bold 36px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
-            }
-        }
-
-        function drawNextPiece() {
-            nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-            if (!nextPiece) return;
-
-            const matrix = nextPiece.matrix;
-            const colorIndex = nextPiece.colorIndex;
-            const blockRenderSize = 25;
-            // Центрируем на маленьком холсте
-            const offsetX = (nextCanvas.width - matrix[0].length * blockRenderSize) / 2;
-            const offsetY = (nextCanvas.height - matrix.length * blockRenderSize) / 2;
-
-            for (let row = 0; row < matrix.length; row++) {
-                for (let col = 0; col < matrix[row].length; col++) {
-                    if (matrix[row][col] !== 0) {
-                        nextCtx.fillStyle = COLORS[colorIndex];
-                        nextCtx.fillRect(offsetX + col * blockRenderSize, 
-                                        offsetY + row * blockRenderSize, 
-                                        blockRenderSize - 1, 
-                                        blockRenderSize - 1);
-                    }
-                }
-            }
-        }
-
-        function render() {
-            drawBoard();
-            drawNextPiece();
-        }
-
-        // ========== ИГРОВОЙ ЦИКЛ ==========
-        function gameLoop(timestamp) {
-            if (!gameOver) {
-                if (timestamp - lastDropTime > dropInterval) {
-                    movePiece(0, 1); // движение вниз
-                    lastDropTime = timestamp;
-                }
-            }
-            render();
-            requestAnimationFrame(gameLoop);
-        }
-
-        // ========== УПРАВЛЕНИЕ С КЛАВИАТУРЫ ==========
-        document.addEventListener('keydown', (e) => {
-            if (gameOver) return;
-            e.preventDefault(); // чтобы страница не скроллилась
-
-            switch (e.key) {
-                case 'ArrowLeft':
-                    movePiece(-1, 0);
-                    break;
-                case 'ArrowRight':
-                    movePiece(1, 0);
-                    break;
-                case 'ArrowDown':
-                    movePiece(0, 1);
-                    // даём небольшой бонус за ускорение (1 очко за строку)
-                    if (!gameOver) score += 1;
-                    updateStats();
-                    break;
-                case 'ArrowUp':
-                    rotatePiece();
-                    break;
-                case ' ':
-                    hardDrop();
-                    break;
-                default:
-                    break;
-            }
-            render();
-        });
-
-        // Запуск
-        init();
-        requestAnimationFrame(gameLoop);
-    </script>
-</body>
-</html>
+            const rot = currentPiece.matrix[0].map((_, i) => currentPiece.matrix.map(r => r[i]).r
