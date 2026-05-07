@@ -1,27 +1,23 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Мини-игра</title>
+  <title>Игра с магазином</title>
   <style>
     body {
       margin: 0;
       height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      overflow: hidden;
       font-family: Arial;
       background: #111;
       color: white;
-      overflow: hidden;
+      text-align: center;
     }
 
     h1 {
-      position: absolute;
-      top: 20px;
-      font-size: 20px;
+      margin-top: 10px;
     }
 
-    button {
+    #btn {
       position: absolute;
       padding: 15px 25px;
       font-size: 18px;
@@ -30,16 +26,65 @@
       cursor: pointer;
       background: #00ff99;
     }
+
+    #ui {
+      position: absolute;
+      top: 50px;
+      width: 100%;
+    }
+
+    button.shop {
+      margin: 5px;
+      padding: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+    }
   </style>
 </head>
 
 <body>
 
-<h1>Поймай кнопку 😄</h1>
-<button onclick="win()">Нажми меня</button>
+<h1>🎮 Поймай кнопку + магазин</h1>
+
+<div id="ui">
+  <div id="coins">Монеты: 0</div>
+
+  <button class="shop" onclick="buySkin('green', 0)">Зелёный (бесплатно)</button>
+  <button class="shop" onclick="buySkin('red', 10)">Красный (10)</button>
+  <button class="shop" onclick="buySkin('blue', 20)">Синий (20)</button>
+</div>
+
+<button id="btn" onclick="win()">Нажми меня</button>
 
 <script>
-  const btn = document.querySelector("button");
+  const btn = document.getElementById("btn");
+  const coinsText = document.getElementById("coins");
+
+  // 🔥 загружаем сохранённые данные
+  let coins = localStorage.getItem("coins");
+  let skin = localStorage.getItem("skin");
+
+  if (coins === null) coins = 0;
+  else coins = parseInt(coins);
+
+  if (skin === null) skin = "green";
+
+  function save() {
+    localStorage.setItem("coins", coins);
+    localStorage.setItem("skin", skin);
+  }
+
+  function updateCoins() {
+    coinsText.innerText = "Монеты: " + coins;
+    save();
+  }
+
+  function applySkin() {
+    if (skin === "green") btn.style.background = "#00ff99";
+    if (skin === "red") btn.style.background = "red";
+    if (skin === "blue") btn.style.background = "blue";
+  }
 
   function moveButton() {
     const x = Math.random() * (window.innerWidth - 100);
@@ -50,14 +95,28 @@
   }
 
   function win() {
-    alert("Ты победил 🎉");
+    coins += 1;
+    updateCoins();
+    moveButton();
   }
 
-  // кнопка убегает каждые 500 мс
-  setInterval(moveButton, 500);
+  function buySkin(type, price) {
+    if (coins < price) {
+      alert("Не хватает монет 😢");
+      return;
+    }
 
-  // стартовая позиция
+    coins -= price;
+    skin = type;
+
+    updateCoins();
+    applySkin();
+  }
+
+  setInterval(moveButton, 700);
   moveButton();
+  applySkin();
+  updateCoins();
 </script>
 
 </body>
