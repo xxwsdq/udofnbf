@@ -2,299 +2,185 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>PRO+ Loot Game</title>
+<title>PRO+ Stable Game</title>
 
 <style>
 body{
   margin:0;
   font-family:Arial;
-  background:radial-gradient(circle,#1a1a1a,#000);
-  color:white;
-  overflow:hidden;
-}
-
-/* TOP BAR */
-#topBar{
-  display:flex;
-  justify-content:space-between;
-  padding:10px;
   background:#111;
-  border-bottom:1px solid #333;
-  font-size:14px;
-}
-
-/* CLICK BUTTON */
-#clickBtn{
-  width:130px;
-  height:130px;
-  border-radius:50%;
-  border:none;
-  font-size:40px;
-  margin-top:80px;
-  background:linear-gradient(45deg,#ffcc00,#ff6600);
-  box-shadow:0 0 20px rgba(255,200,0,0.5);
-}
-
-/* MENU */
-#menu{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  justify-content:space-around;
-  background:#111;
-  padding:10px 0;
-  border-top:1px solid #333;
-}
-
-.menuBtn{
-  background:none;
-  border:none;
   color:white;
-}
-
-/* MODALS */
-.modal{
-  position:fixed;
-  top:0;left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.85);
-  display:none;
-  justify-content:center;
-  align-items:center;
-}
-
-.card{
-  background:#222;
-  padding:20px;
-  border-radius:10px;
   text-align:center;
 }
 
-/* BOSS */
+#clickBtn{
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  border:none;
+  font-size:40px;
+  margin-top:60px;
+  background:orange;
+}
+
 #boss{
   margin-top:10px;
   color:red;
+  font-weight:bold;
+}
+
+button{
+  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<!-- TOP -->
-<div id="topBar">
-  <div>💰 <span id="coins">0</span></div>
-  <div>🌍 <span id="location">village</span></div>
-  <div>⭐ Lv <span id="level">1</span></div>
-</div>
+<h2>🎮 Stable Game</h2>
+
+<div>💰 <span id="coins">0</span></div>
+<div>🌍 <span id="location">village</span></div>
 
 <div id="boss"></div>
 
-<!-- CLICK -->
-<div style="text-align:center;">
-  <button id="clickBtn" onclick="clicker()">👆</button>
-</div>
+<button id="clickBtn" onclick="clicker()">👆</button>
 
-<!-- MENU -->
-<div id="menu">
-  <button class="menuBtn" onclick="openShop()">🛒 Shop</button>
-  <button class="menuBtn" onclick="openChests()">🧰 Chests</button>
-</div>
+<br><br>
 
-<!-- SHOP -->
-<div id="shopModal" class="modal">
-  <div class="card">
-    <h3>Shop</h3>
-    <button onclick="buySkin('watermelon',30)">🍉 30</button>
-    <button onclick="buySkin('hero',40)">🦸 40</button>
-    <br><br>
-    <button onclick="closeModal()">Close</button>
-  </div>
-</div>
-
-<!-- CHESTS -->
-<div id="chestModal" class="modal">
-  <div class="card">
-    <h3>Chests</h3>
-    <button onclick="openChest('rare')">Rare</button>
-    <button onclick="openChest('epic')">Epic</button>
-    <button onclick="openChest('mythic')">Mythic</button>
-    <button onclick="openChest('legendary')">Legendary</button>
-    <br><br>
-    <button onclick="closeModal()">Close</button>
-  </div>
-</div>
+<button onclick="openChest()">🧰 Chest</button>
+<button onclick="buySkin()">🛒 Skin</button>
 
 <script>
 
-let coins=0;
-let clicks=0;
-let skin="default";
-let location="village";
+let coins = 0;
+let clicks = 0;
+let boss = null;
+let location = "village";
 
-let keys={
- rare:0,
- epic:0,
- mythic:0,
- legendary:0
-};
+/* SAFE LOAD */
+function safeLoad(key, fallback){
+  try{
+    return JSON.parse(localStorage.getItem(key)) ?? fallback;
+  }catch(e){
+    return fallback;
+  }
+}
 
-let owned={
- watermelon:false,
- hero:false
-};
+/* DATA */
+let keys = safeLoad("keys", {
+ rare:0, epic:0, mythic:0, legendary:0
+});
 
-let boss=null;
-
-/* BOSSES */
-const bosses={
- village:{name:"Гоблин",hp:20,reward:"rare"},
- city:{name:"Кибер-Страж",hp:50,reward:"epic"},
- volcano:{name:"Голем",hp:100,reward:"mythic"},
- desert:{name:"Титан",hp:150,reward:"legendary"},
- space:{name:"Хаос",hp:300,reward:"coins"}
-};
+let owned = safeLoad("owned", {});
 
 /* SAVE */
 function save(){
- localStorage.setItem("coins",coins);
- localStorage.setItem("keys",JSON.stringify(keys));
- localStorage.setItem("owned",JSON.stringify(owned));
+  localStorage.setItem("coins", coins);
+  localStorage.setItem("keys", JSON.stringify(keys));
+  localStorage.setItem("owned", JSON.stringify(owned));
 }
 
 /* LOAD */
 function load(){
- coins=Number(localStorage.getItem("coins"))||0;
- keys=JSON.parse(localStorage.getItem("keys"))||keys;
- owned=JSON.parse(localStorage.getItem("owned"))||owned;
- update();
+  coins = Number(localStorage.getItem("coins") || 0);
+  update();
 }
 
 /* CLICK */
 function clicker(){
 
- coins++;
- clicks++;
+  coins++;
+  clicks++;
 
- if(Math.random()<0.2) keys.rare++;
- if(Math.random()<0.12) keys.epic++;
- if(Math.random()<0.07) keys.mythic++;
- if(Math.random()<0.03) keys.legendary++;
+  // keys safe
+  if(Math.random()<0.2) keys.rare++;
+  if(Math.random()<0.1) keys.epic++;
 
- if(boss){
-  boss.hp--;
-  document.getElementById("boss").innerText=
-  "👹 "+boss.name+" HP:"+boss.hp;
+  // boss safe
+  if(boss){
+    boss.hp--;
 
-  if(boss.hp<=0) defeatBoss();
+    document.getElementById("boss").innerText =
+    "👹 "+boss.name+" HP: "+boss.hp;
+
+    if(boss.hp <= 0){
+      boss = null;
+      document.getElementById("boss").innerText = "💀 Boss defeated!";
+      coins += 50;
+    }
+
+    update();
+    save();
+    return;
+  }
+
+  if(clicks % 10 === 0){
+    spawnBoss();
+  }
+
   update();
-  return;
- }
-
- if(clicks%15===0) spawnBoss();
-
- update();
- save();
+  save();
 }
 
 /* BOSS */
 function spawnBoss(){
- boss={...bosses[location]};
- document.getElementById("boss").innerText=
- "👹 "+boss.name+" HP:"+boss.hp;
+
+  let list = {
+    village:{name:"Goblin",hp:10},
+    city:{name:"Robot",hp:25},
+    volcano:{name:"Golem",hp:40}
+  };
+
+  boss = {...list[location]};
+
+  if(!boss) boss = {name:"Unknown",hp:10};
+
+  document.getElementById("boss").innerText =
+  "👹 "+boss.name+" HP: "+boss.hp;
 }
 
-function defeatBoss(){
- alert("Босс побеждён!");
+/* CHEST */
+function openChest(){
 
- if(boss.reward==="coins") coins+=50;
- else keys[boss.reward]++;
+  let r = Math.random();
 
- boss=null;
- document.getElementById("boss").innerText="";
- save();
- update();
+  if(r < 0.5){
+    coins += 5;
+    alert("💰 +5 coins");
+  } else {
+    keys.rare++;
+    alert("🔑 rare key");
+  }
+
+  update();
+  save();
 }
 
-/* CHESTS */
-function openChest(type){
+/* SKIN */
+function buySkin(){
 
- if(keys[type]<=0){
-  alert("нет ключа");
-  return;
- }
+  if(coins < 20){
+    alert("not enough coins");
+    return;
+  }
 
- keys[type]--;
+  coins -= 20;
+  alert("skin bought!");
 
- let r=Math.random();
- let reward="";
-
- if(type==="rare"){
-  if(r<0.3) reward="+1💰";
-  else reward="скин";
- }
-
- if(type==="epic"){
-  reward="+10💰";
- }
-
- if(type==="mythic"){
-  reward="+20💰";
- }
-
- if(type==="legendary"){
-  reward="+30💰";
- }
-
- coins+=Math.floor(Math.random()*5);
-
- alert("🎁 "+reward);
-
- save();
- update();
+  update();
+  save();
 }
 
-/* SHOP */
-function buySkin(name,price){
-
- if(!owned[name]){
-  if(coins<price) return;
-  coins-=price;
-  owned[name]=true;
- }
-
- skin=name;
-
- if(name==="watermelon") clickBtn.innerText="🍉";
- if(name==="hero") clickBtn.innerText="🦸";
-
- save();
- update();
-}
-
-/* UI */
-function openShop(){
- document.getElementById("shopModal").style.display="flex";
-}
-
-function openChests(){
- document.getElementById("chestModal").style.display="flex";
-}
-
-function closeModal(){
- document.querySelectorAll(".modal").forEach(m=>{
-  m.style.display="none";
- });
-}
-
-/* UPDATE */
+/* UPDATE SAFE */
 function update(){
- document.getElementById("coins").innerText=coins;
- document.getElementById("location").innerText=location;
- document.getElementById("level").innerText=Math.floor(clicks/10)+1;
+
+  document.getElementById("coins").innerText = coins;
+  document.getElementById("location").innerText = location;
+
 }
 
+/* START */
 load();
 update();
 
