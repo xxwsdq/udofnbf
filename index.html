@@ -1,401 +1,410 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Realm Breakers v5</title>
-
-<style>
-body{
-margin:0;
-font-family:Arial;
-background:#0b0f1d;
-color:white;
-display:flex;
-justify-content:center;
-}
-
-#login,#game{
-width:100%;
-max-width:500px;
-}
-
-.panel{
-margin:10px;
-padding:12px;
-background:rgba(255,255,255,0.06);
-border-radius:14px;
-box-sizing:border-box;
-}
-
-h2,h3{
-margin:5px 0;
-font-size:18px;
-}
-
-input, select{
-width:100%;
-padding:12px;
-margin:5px 0;
-border:none;
-border-radius:10px;
-font-size:16px;
-box-sizing:border-box;
-}
-
-button{
-width:100%;
-padding:14px;
-margin:6px 0;
-border:none;
-border-radius:12px;
-font-size:16px;
-font-weight:bold;
-cursor:pointer;
-background:#2b6cff;
-color:white;
-}
-
-button:active{
-transform:scale(0.98);
-}
-
-.bar{
-width:100%;
-height:14px;
-background:#333;
-border-radius:10px;
-overflow:hidden;
-}
-
-.fill{
-height:100%;
-width:100%;
-background:red;
-transition:0.2s;
-}
-
-.item{
-padding:6px;
-margin:5px 0;
-background:rgba(255,255,255,0.1);
-border-radius:10px;
-font-size:14px;
-}
-
-/* TABS */
-.tab{
-display:none;
-padding-bottom:90px;
-}
-
-.tab.active{
-display:block;
-}
-
-/* NAV */
-.nav{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-display:flex;
-background:#111827;
-padding:8px;
-gap:8px;
-}
-
-.nav button{
-flex:1;
-padding:12px;
-border-radius:10px;
-background:#1f2937;
-font-size:14px;
-}
-
-.nav button:active{
-transform:scale(0.97);
-}
-
-/* MOBILE */
-@media (max-width:600px){
-button{font-size:17px;padding:16px;}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тетрис на JavaScript</title>
+    <style>
+        body {
+            background-color: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            color: white;
+        }
+        .game-container {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        canvas {
+            border: 2px solid #16213e;
+            background-color: #0f0f1e;
+        }
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .next-piece {
+            text-align: center;
+        }
+        .score {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            min-width: 120px;
+        }
+        .score h3 {
+            margin: 0 0 10px 0;
+            color: #e94560;
+        }
+        .controls {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .controls p {
+            margin: 8px 0;
+        }
+    </style>
 </head>
-
 <body>
-
-<!-- LOGIN -->
-<div id="login">
-<div class="panel">
-<h2>⚔️ Realm Breakers v5</h2>
-
-<input id="nick" placeholder="ник">
-
-<select id="class">
-<option value="warrior">⚔️ Воин</option>
-<option value="mage">🔥 Маг</option>
-<option value="rogue">🗡 Вор</option>
-</select>
-
-<button onclick="start()">Играть</button>
-</div>
-</div>
-
-<!-- GAME -->
-<div id="game" style="display:none;">
-
-<!-- GAME TAB -->
-<div id="gameTab" class="tab active">
-
-<div class="panel">
-👤 <span id="name"></span><br>
-🏷 класс: <span id="className"></span><br>
-💰 <span id="coins"></span> |
-⭐ Lv <span id="level"></span>
-</div>
-
-<div class="panel">
-❤️ HP: <span id="hp"></span>/<span id="hpMax"></span>
-<div class="bar"><div class="fill" id="hpFill"></div></div>
-</div>
-
-<div class="panel">
-<button onclick="fight()">⚔️ бой</button>
-<button onclick="skill()">⚡ скилл</button>
-<button onclick="chest()">🧰 сундук</button>
-</div>
-
-</div>
-
-<!-- INVENTORY -->
-<div id="invTab" class="tab">
-<div class="panel">
-<h3>🎒 инвентарь</h3>
-<div id="inv"></div>
-</div>
-</div>
-
-<!-- STATS -->
-<div id="statsTab" class="tab">
-<div class="panel">
-<h3>📊 статы</h3>
-⚔️ Сила: <span id="str"></span><br>
-🛡 Защита: <span id="def"></span><br>
-🍀 Удача: <span id="luck"></span>
-</div>
-</div>
-
-</div>
-
-<!-- NAV -->
-<div class="nav">
-<button onclick="showTab('gameTab')">⚔️ Игра</button>
-<button onclick="showTab('invTab')">🎒 Инвентарь</button>
-<button onclick="showTab('statsTab')">📊 Статы</button>
-</div>
-
-<script>
-
-/* PLAYER */
-let player="";
-let playerClass="warrior";
-
-let coins=0;
-let level=1;
-
-let hp=100;
-let hpMax=100;
-
-let str=1;
-let def=1;
-let luck=1;
-
-let inv=[];
-
-let skillCD=false;
-
-/* START */
-function start(){
-
-player=document.getElementById("nick").value||"Hero";
-playerClass=document.getElementById("class").value;
-
-applyClass();
-
-document.getElementById("login").style.display="none";
-document.getElementById("game").style.display="block";
-
-load();
-update();
-renderInv();
-}
-
-/* CLASS */
-function applyClass(){
-
-if(playerClass==="warrior"){
-hpMax=130;
-def+=2;
-}
-
-if(playerClass==="mage"){
-str+=3;
-hpMax=80;
-}
-
-if(playerClass==="rogue"){
-luck+=3;
-hpMax=90;
-}
-}
-
-/* FIGHT */
-function fight(){
-
-let enemy=8+Math.random()*10;
-
-let dmg=str;
-
-if(playerClass==="mage") dmg*=1.2;
-
-if(playerClass==="rogue" && Math.random()<0.2){
-enemy=0;
-}
-
-hp-=enemy-def;
-
-coins+=Math.floor(dmg);
-
-if(hp<=0){
-hp=hpMax;
-coins=Math.max(0,coins-30);
-}
-
-levelUp();
-update();
-}
-
-/* SKILL */
-function skill(){
-
-if(skillCD) return;
-
-if(playerClass==="warrior"){
-hp+=25;
-if(hp>hpMax) hp=hpMax;
-}
-
-if(playerClass==="mage"){
-coins+=str*3;
-}
-
-if(playerClass==="rogue"){
-coins+=luck*10;
-}
-
-skillCD=true;
-setTimeout(()=>skillCD=false,3000);
-}
-
-/* CHEST */
-function chest(){
-
-let r=Math.random();
-
-if(r<0.5) coins+=10;
-else if(r<0.8){ coins+=40; str++; inv.push("weapon"); }
-else if(r<0.95){ coins+=80; luck++; inv.push("ring"); }
-else{ coins=0; hp-=20; inv.push("curse"); }
-
-renderInv();
-update();
-}
-
-/* LEVEL */
-function levelUp(){
-
-if(coins>=100){
-level++;
-coins=0;
-
-hpMax+=10;
-hp=hpMax;
-str++;
-def++;
-}
-}
-
-/* INVENTORY */
-function renderInv(){
-
-invBox.innerHTML="";
-
-inv.forEach(i=>{
-invBox.innerHTML+=`<div class="item">🎁 ${i}</div>`;
-});
-}
-
-/* UI */
-function update(){
-
-nameSpan.innerText=player;
-className.innerText=playerClass;
-
-coinsSpan.innerText=coins;
-levelSpan.innerText=level;
-
-strSpan.innerText=str;
-defSpan.innerText=def;
-luckSpan.innerText=luck;
-
-hpSpan.innerText=hp;
-hpMaxSpan.innerText=hpMax;
-
-hpFill.style.width=(hp/hpMax*100)+"%";
-}
-
-/* TABS */
-function showTab(tab){
-
-document.querySelectorAll(".tab").forEach(t=>{
-t.classList.remove("active");
-});
-
-document.getElementById(tab).classList.add("active");
-}
-
-/* SAVE */
-function save(){
-localStorage.setItem("coins",coins);
-localStorage.setItem("level",level);
-localStorage.setItem("hp",hp);
-localStorage.setItem("hpMax",hpMax);
-localStorage.setItem("str",str);
-localStorage.setItem("def",def);
-localStorage.setItem("luck",luck);
-localStorage.setItem("class",playerClass);
-localStorage.setItem("inv",JSON.stringify(inv));
-}
-
-/* LOAD */
-function load(){
-coins=+localStorage.getItem("coins")||0;
-level=+localStorage.getItem("level")||1;
-hp=+localStorage.getItem("hp")||100;
-hpMax=+localStorage.getItem("hpMax")||100;
-
-str=+localStorage.getItem("str")||1;
-def=+localStorage.getItem("def")||1;
-luck=+localStorage.getItem("luck")||1;
-
-playerClass=localStorage.getItem("class")||playerClass;
-
-inv=JSON.parse(localStorage.getItem("inv")||"[]");
-}
-
-</script>
-
+    <div class="game-container">
+        <canvas id="tetris" width="300" height="600"></canvas>
+        <div class="side-panel">
+            <div class="next-piece">
+                <h3>Следующая</h3>
+                <canvas id="next" width="120" height="120"></canvas>
+            </div>
+            <div class="score">
+                <h3>Счёт: <span id="scoreValue">0</span></h3>
+                <p>Уровень: <span id="levelValue">1</span></p>
+                <p>Линий: <span id="linesValue">0</span></p>
+            </div>
+            <div class="controls">
+                <p>← → двигать</p>
+                <p>↓ вниз</p>
+                <p>↑ поворот</p>
+                <p>Пробел – сброс</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== КОНСТАНТЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ==========
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 30; // пикселей
+        const COLORS = [
+            '#0f0f1e', // фон
+            '#e94560', // I - красный
+            '#f5c542', // O - жёлтый
+            '#4e9af1', // T - синий
+            '#6f42c1', // S - фиолетовый
+            '#2ecc71', // Z - зелёный
+            '#e67e22', // J - оранжевый
+            '#1abc9c'  // L - бирюзовый
+        ];
+
+        // Фигуры (тетромино) – классические формы
+        const TETROMINOS = [
+            // I
+            [[1,1,1,1]],
+            // O
+            [[1,1],
+             [1,1]],
+            // T
+            [[0,1,0],
+             [1,1,1]],
+            // S
+            [[0,1,1],
+             [1,1,0]],
+            // Z
+            [[1,1,0],
+             [0,1,1]],
+            // J
+            [[1,0,0],
+             [1,1,1]],
+            // L
+            [[0,0,1],
+             [1,1,1]]
+        ];
+
+        let board = [];                // матрица ROWS x COLS, 0 пусто, >0 цвет
+        let currentPiece = null;      // { matrix, colorIndex, x, y }
+        let nextPiece = null;
+        let gameOver = false;
+        let score = 0;
+        let linesCleared = 0;
+        let level = 1;
+        let dropInterval = 500;       // мс
+        let lastDropTime = 0;
+
+        // DOM элементы
+        const canvas = document.getElementById('tetris');
+        const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('next');
+        const nextCtx = nextCanvas.getContext('2d');
+
+        const scoreSpan = document.getElementById('scoreValue');
+        const levelSpan = document.getElementById('levelValue');
+        const linesSpan = document.getElementById('linesValue');
+
+        // ========== ФУНКЦИИ ==========
+
+        // Инициализация / сброс игры
+        function init() {
+            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            gameOver = false;
+            score = 0;
+            linesCleared = 0;
+            level = 1;
+            dropInterval = 500;
+            lastDropTime = 0;
+            updateStats();
+
+            // Создаём первую и следующую фигуры
+            nextPiece = randomPiece();
+            spawnPiece();
+        }
+
+        // Создать случайную фигуру
+        function randomPiece() {
+            const idx = Math.floor(Math.random() * TETROMINOS.length);
+            const matrix = TETROMINOS[idx].map(row => [...row]);
+            const colorIndex = idx + 1; // первый цвет зарезервирован для фона
+            return { matrix, colorIndex };
+        }
+
+        // Поместить новую фигуру на поле
+        function spawnPiece() {
+            if (!nextPiece) {
+                nextPiece = randomPiece();
+            }
+            currentPiece = {
+                matrix: nextPiece.matrix.map(row => [...row]),
+                colorIndex: nextPiece.colorIndex,
+                x: Math.floor((COLS - nextPiece.matrix[0].length) / 2),
+                y: 0
+            };
+            nextPiece = randomPiece();
+
+            // Если новую фигуру сразу некуда поставить — игра окончена
+            if (!isValidPosition(currentPiece.matrix, currentPiece.x, currentPiece.y)) {
+                gameOver = true;
+            }
+        }
+
+        // Проверка, может ли фигура находиться в заданной позиции
+        function isValidPosition(matrix, posX, posY) {
+            for (let row = 0; row < matrix.length; row++) {
+                for (let col = 0; col < matrix[row].length; col++) {
+                    if (matrix[row][col] !== 0) {
+                        const boardX = posX + col;
+                        const boardY = posY + row;
+                        // Выход за границы или наложение на занятую клетку
+                        if (boardX < 0 || boardX >= COLS ||
+                            boardY >= ROWS ||
+                            (boardY >= 0 && board[boardY][boardX] !== 0)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        // Зафиксировать текущую фигуру на доске
+        function lockPiece() {
+            const { matrix, x, y, colorIndex } = currentPiece;
+            for (let row = 0; row < matrix.length; row++) {
+                for (let col = 0; col < matrix[row].length; col++) {
+                    if (matrix[row][col] !== 0) {
+                        const boardY = y + row;
+                        const boardX = x + col;
+                        if (boardY >= 0 && boardY < ROWS && boardX >= 0 && boardX < COLS) {
+                            board[boardY][boardX] = colorIndex;
+                        }
+                    }
+                }
+            }
+            // Удалить заполненные линии
+            clearFullRows();
+            // Создать новую фигуру
+            spawnPiece();
+        }
+
+        // Удаление заполненных линий и начисление очков
+        function clearFullRows() {
+            let linesRemoved = 0;
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (board[row].every(cell => cell !== 0)) {
+                    // Удаляем строку
+                    board.splice(row, 1);
+                    board.unshift(new Array(COLS).fill(0));
+                    row++; // проверить ту же позицию после смещения
+                    linesRemoved++;
+                }
+            }
+
+            if (linesRemoved > 0) {
+                linesCleared += linesRemoved;
+                // Начисление очков
+                const pointsMap = [0, 100, 300, 500, 800];
+                score += pointsMap[linesRemoved] * level;
+                // Обновление уровня (каждые 1000 очков)
+                const newLevel = Math.floor(score / 1000) + 1;
+                if (newLevel > level) {
+                    level = newLevel;
+                    dropInterval = Math.max(50, 500 - (level - 1) * 50);
+                }
+                updateStats();
+            }
+        }
+
+        // Движение фигуры влево/вправо/вниз
+        function movePiece(dx, dy) {
+            if (!currentPiece || gameOver) return false;
+            const newX = currentPiece.x + dx;
+            const newY = currentPiece.y + dy;
+            if (isValidPosition(currentPiece.matrix, newX, newY)) {
+                currentPiece.x = newX;
+                currentPiece.y = newY;
+                return true;
+            }
+            // Если движение вниз невозможно — фиксируем фигуру
+            if (dy === 1) {
+                lockPiece();
+            }
+            return false;
+        }
+
+        // Поворот фигуры (по часовой стрелке)
+        function rotatePiece() {
+            if (!currentPiece || gameOver) return;
+            const matrix = currentPiece.matrix;
+            // Транспонирование + реверс строк = поворот на 90°
+            const rotated = matrix[0].map((_, idx) => matrix.map(row => row[idx]).reverse());
+            if (isValidPosition(rotated, currentPiece.x, currentPiece.y)) {
+                currentPiece.matrix = rotated;
+            }
+            // Иначе — поворот не выполняется (нет места)
+        }
+
+        // Мгновенное падение (hard drop)
+        function hardDrop() {
+            if (!currentPiece || gameOver) return;
+            while (isValidPosition(currentPiece.matrix, currentPiece.x, currentPiece.y + 1)) {
+                currentPiece.y++;
+            }
+            lockPiece();
+        }
+
+        // Обновить счёт/уровень/линии на экране
+        function updateStats() {
+            scoreSpan.textContent = score;
+            levelSpan.textContent = level;
+            linesSpan.textContent = linesCleared;
+        }
+
+        // ========== ОТРИСОВКА ==========
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Сетка
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    const colorIndex = board[row][col];
+                    ctx.fillStyle = COLORS[colorIndex];
+                    ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                }
+            }
+
+            // Текущая фигура
+            if (currentPiece && !gameOver) {
+                const { matrix, x, y, colorIndex } = currentPiece;
+                for (let row = 0; row < matrix.length; row++) {
+                    for (let col = 0; col < matrix[row].length; col++) {
+                        if (matrix[row][col] !== 0) {
+                            ctx.fillStyle = COLORS[colorIndex];
+                            const drawX = (x + col) * BLOCK_SIZE;
+                            const drawY = (y + row) * BLOCK_SIZE;
+                            ctx.fillRect(drawX, drawY, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
+                        }
+                    }
+                }
+            }
+
+            // Затемнение экрана при game over
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#e94560';
+                ctx.font = 'bold 36px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('GAME OVER', canvas.width/2, canvas.height/2);
+            }
+        }
+
+        function drawNextPiece() {
+            nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+            if (!nextPiece) return;
+
+            const matrix = nextPiece.matrix;
+            const colorIndex = nextPiece.colorIndex;
+            const blockRenderSize = 25;
+            // Центрируем на маленьком холсте
+            const offsetX = (nextCanvas.width - matrix[0].length * blockRenderSize) / 2;
+            const offsetY = (nextCanvas.height - matrix.length * blockRenderSize) / 2;
+
+            for (let row = 0; row < matrix.length; row++) {
+                for (let col = 0; col < matrix[row].length; col++) {
+                    if (matrix[row][col] !== 0) {
+                        nextCtx.fillStyle = COLORS[colorIndex];
+                        nextCtx.fillRect(offsetX + col * blockRenderSize, 
+                                        offsetY + row * blockRenderSize, 
+                                        blockRenderSize - 1, 
+                                        blockRenderSize - 1);
+                    }
+                }
+            }
+        }
+
+        function render() {
+            drawBoard();
+            drawNextPiece();
+        }
+
+        // ========== ИГРОВОЙ ЦИКЛ ==========
+        function gameLoop(timestamp) {
+            if (!gameOver) {
+                if (timestamp - lastDropTime > dropInterval) {
+                    movePiece(0, 1); // движение вниз
+                    lastDropTime = timestamp;
+                }
+            }
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ========== УПРАВЛЕНИЕ С КЛАВИАТУРЫ ==========
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            e.preventDefault(); // чтобы страница не скроллилась
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    movePiece(-1, 0);
+                    break;
+                case 'ArrowRight':
+                    movePiece(1, 0);
+                    break;
+                case 'ArrowDown':
+                    movePiece(0, 1);
+                    // даём небольшой бонус за ускорение (1 очко за строку)
+                    if (!gameOver) score += 1;
+                    updateStats();
+                    break;
+                case 'ArrowUp':
+                    rotatePiece();
+                    break;
+                case ' ':
+                    hardDrop();
+                    break;
+                default:
+                    break;
+            }
+            render();
+        });
+
+        // Запуск
+        init();
+        requestAnimationFrame(gameLoop);
+    </script>
 </body>
 </html>
