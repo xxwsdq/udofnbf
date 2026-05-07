@@ -1,134 +1,55 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Игра с магазином</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      overflow: hidden;
-      font-family: Arial;
-      background: #111;
-      color: white;
-      text-align: center;
-    }
+const btn = document.getElementById("btn");
+const coinsText = document.getElementById("coins");
 
-    h1 {
-      margin-top: 10px;
-    }
+let coins = Number(localStorage.getItem("coins")) || 0;
+let skin = localStorage.getItem("skin") || "green";
 
-    #btn {
-      position: absolute;
-      padding: 15px 25px;
-      font-size: 18px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      background: #00ff99;
-    }
+function save() {
+  localStorage.setItem("coins", coins);
+  localStorage.setItem("skin", skin);
+}
 
-    #ui {
-      position: absolute;
-      top: 50px;
-      width: 100%;
-    }
+function updateCoins() {
+  coinsText.innerText = "Монеты: " + coins;
+  save();
+}
 
-    button.shop {
-      margin: 5px;
-      padding: 10px;
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-    }
-  </style>
-</head>
+function applySkin() {
+  if (skin === "green") btn.style.background = "#00ff99";
+  if (skin === "red") btn.style.background = "red";
+  if (skin === "blue") btn.style.background = "blue";
+}
 
-<body>
+function moveButton() {
+  const x = Math.random() * (window.innerWidth - 100);
+  const y = Math.random() * (window.innerHeight - 100);
+  btn.style.left = x + "px";
+  btn.style.top = y + "px";
+}
 
-<h1>🎮 Поймай кнопку + магазин</h1>
+function win() {
+  coins += 1;
+  updateCoins();
+  moveButton();
+}
 
-<div id="ui">
-  <div id="coins">Монеты: 0</div>
-
-  <button class="shop" onclick="buySkin('green', 0)">Зелёный (бесплатно)</button>
-  <button class="shop" onclick="buySkin('red', 10)">Красный (10)</button>
-  <button class="shop" onclick="buySkin('blue', 20)">Синий (20)</button>
-</div>
-
-<button id="btn" onclick="win()">Нажми меня</button>
-
-<script>
-  const btn = document.getElementById("btn");
-  const coinsText = document.getElementById("coins");
-
-  // Загружаем сохранённые данные или задаём начальные значения
-  let coins = localStorage.getItem("coins");
-  let ownedSkins = JSON.parse(localStorage.getItem("ownedSkins"));
-  let skin = localStorage.getItem("skin");
-
-  if (coins === null) coins = 0;
-  else coins = parseInt(coins);
-
-  if (ownedSkins === null) ownedSkins = {};
-  // Если нет сохранённых скинов, изначально владеем зелёным
-  if (Object.keys(ownedSkins).length === 0) ownedSkins['green'] = true;
-
-  if (skin === null) skin = 'green';
-
-  function save() {
-    localStorage.setItem("coins", coins);
-    localStorage.setItem("skin", skin);
-    localStorage.setItem("ownedSkins", JSON.stringify(ownedSkins));
-  }
-
-  function updateCoins() {
-    coinsText.innerText = "Монеты: " + coins;
-    save();
-  }
-
-  function applySkin() {
-    if (skin === "green") btn.style.background = "#00ff99";
-    if (skin === "red") btn.style.background = "red";
-    if (skin === "blue") btn.style.background = "blue";
-  }
-
-  function moveButton() {
-    const x = Math.random() * (window.innerWidth - 100);
-    const y = Math.random() * (window.innerHeight - 100);
-
-    btn.style.left = x + "px";
-    btn.style.top = y + "px";
-  }
-
-  function win() {
-    coins += 1;
-    updateCoins();
-    moveButton();
-  }
-
-  function buySkin(type, price) {
-    if (!ownedSkins[type] && coins < price) {
-      alert("Не хватает монет 😢");
-      return;
-    }
-
-    if (!ownedSkins[type]) {
-      // Покупка нового скина
-      coins -= price;
-      ownedSkins[type] = true;
-      alert("Скин " + type + " куплен!");
-    }
-
+function buySkin(type, price) {
+  // если уже есть или покупаешь бесплатно
+  if (coins >= price) {
+    coins -= price;
     skin = type;
     updateCoins();
     applySkin();
+  } else if (skin === type) {
+    // просто переключить
+    skin = type;
+    applySkin();
+  } else {
+    alert("Не хватает монет 😢");
   }
+}
 
-  setInterval(moveButton, 700);
-  moveButton();
-  applySkin();
-  updateCoins();
-</script>
-
-</body>
-</html>
+setInterval(moveButton, 700);
+moveButton();
+applySkin();
+updateCoins();
