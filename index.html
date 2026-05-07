@@ -1,319 +1,469 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>FINAL BOSS CLICKER</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Final Loot Clicker</title>
 
 <style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial, sans-serif;
+}
+
 body{
-  margin:0;
-  font-family:Arial;
-  background:radial-gradient(circle,#0a0a0a,#000);
-  color:white;
-  text-align:center;
+background:linear-gradient(180deg,#3ec9ff,#0d6efd);
+min-height:100vh;
+color:#fff;
+overflow-x:hidden;
 }
 
-/* HUD */
-#hud{
-  display:flex;
-  justify-content:space-between;
-  padding:10px;
-  background:#111;
-  border-bottom:1px solid #333;
+#topbar{
+display:flex;
+justify-content:space-between;
+padding:12px;
+background:rgba(0,0,0,0.25);
+font-weight:bold;
+font-size:15px;
 }
 
-/* CLICK */
-#btn{
-  width:170px;
-  height:170px;
-  border-radius:50%;
-  border:none;
-  font-size:45px;
-  margin-top:40px;
-  background:linear-gradient(45deg,#ffd54f,#ff6f00);
-  box-shadow:0 0 30px rgba(255,200,0,0.3);
-  transition:0.1s;
+.panel{
+background:rgba(255,255,255,0.15);
+border-radius:14px;
+padding:10px;
+margin:10px;
+backdrop-filter:blur(6px);
 }
-#btn:active{transform:scale(0.92);}
 
-/* FLOAT */
+.center{
+text-align:center;
+}
+
+#clickBtn{
+width:170px;
+height:170px;
+border:none;
+border-radius:50%;
+font-size:65px;
+cursor:pointer;
+background:linear-gradient(145deg,#ffe066,#ff9f1c);
+box-shadow:0 10px 0 #d97706;
+transition:0.08s;
+margin-top:15px;
+}
+
+#clickBtn:active{
+transform:translateY(8px);
+box-shadow:0 2px 0 #d97706;
+}
+
+#bossBox{
+margin-top:15px;
+font-size:18px;
+font-weight:bold;
+}
+
+.hpbar{
+width:90%;
+height:18px;
+background:#333;
+border-radius:10px;
+margin:auto;
+overflow:hidden;
+margin-top:8px;
+}
+
+.hpfill{
+height:100%;
+background:#ff4d4d;
+width:100%;
+transition:0.2s;
+}
+
+.menu{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+padding:10px;
+}
+
+.menu button{
+padding:12px;
+border:none;
+border-radius:12px;
+font-weight:bold;
+cursor:pointer;
+background:#ffffff;
+color:#111;
+}
+
+.section{
+display:none;
+}
+
+.show{
+display:block;
+}
+
+.item{
+background:rgba(255,255,255,0.12);
+padding:8px;
+margin:7px 0;
+border-radius:10px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.buyBtn{
+border:none;
+padding:7px 10px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+background:#ffe066;
+color:#111;
+}
+
+#floatArea{
+position:fixed;
+left:0;
+top:0;
+width:100%;
+height:100%;
+pointer-events:none;
+overflow:hidden;
+}
+
 .float{
-  position:absolute;
-  animation:up 0.8s linear forwards;
-  pointer-events:none;
+position:absolute;
+font-weight:bold;
+animation:up 1s linear forwards;
 }
 
 @keyframes up{
-  0%{transform:translateY(0);opacity:1;}
-  100%{transform:translateY(-80px);opacity:0;}
+0%{opacity:1;transform:translateY(0);}
+100%{opacity:0;transform:translateY(-70px);}
 }
 
-/* MENU */
-#menu{
-  position:fixed;
-  bottom:0;
-  width:100%;
-  display:flex;
-  justify-content:space-around;
-  background:#111;
-  padding:10px;
+.small{
+font-size:13px;
+opacity:0.9;
 }
 
-/* MODAL */
-.modal{
-  position:fixed;
-  top:0;left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,0.85);
-  display:none;
-  justify-content:center;
-  align-items:center;
-}
-
-.card{
-  background:#222;
-  padding:20px;
-  border-radius:12px;
-}
-
-/* BOSS */
-#boss{
-  position:absolute;
-  top:10px;
-  right:10px;
-  color:red;
-  font-weight:bold;
-}
-
-/* EFFECT */
-.hit{
-  animation:hit 0.15s;
-}
-
-@keyframes hit{
-  0%{transform:scale(1);}
-  50%{transform:scale(1.2);}
-  100%{transform:scale(1);}
+footer{
+height:40px;
 }
 </style>
 </head>
-
 <body>
 
-<!-- HUD -->
-<div id="hud">
-  <div>💰 <span id="coins">0</span></div>
-  <div>🌍 <span id="loc">village</span></div>
-  <div>⭐ Lv <span id="lvl">1</span></div>
+<div id="topbar">
+<div>💰 <span id="coins">0</span></div>
+<div>⭐ Lv <span id="lvl">1</span></div>
+<div>🌍 <span id="zoneName">Деревня</span></div>
 </div>
 
-<div id="boss"></div>
+<div class="panel center">
 
-<button id="btn" onclick="clicker()">👊</button>
+<h2>🎮 FINAL LOOT CLICKER</h2>
 
-<div id="menu">
-  <button onclick="openShop()">🛒</button>
-  <button onclick="openChest()">🧰</button>
-  <button onclick="nextLoc()">🌍</button>
+<button id="clickBtn">👊</button>
+
+<div id="bossBox">👹 Босса нет</div>
+
+<div class="hpbar">
+<div class="hpfill" id="hpFill"></div>
 </div>
 
-<!-- SHOP -->
-<div id="shop" class="modal">
-  <div class="card">
-    <h3>Perks</h3>
-    <button onclick="perk('power')">💥 +DMG</button>
-    <button onclick="perk('luck')">🍀 +DROP</button>
-    <br><br>
-    <button onclick="closeAll()">Close</button>
-  </div>
+<div class="small" id="keysInfo">
+🔑 Rare 0 | Epic 0 | Mythic 0 | Leg 0 | Ultra 0
 </div>
 
-<!-- CHEST -->
-<div id="chest" class="modal">
-  <div class="card">
-    <h3>Chest</h3>
-    <button onclick="openBox()">Open</button>
-    <br><br>
-    <button onclick="closeAll()">Close</button>
-  </div>
 </div>
+
+<div class="menu">
+<button onclick="openTab('shop')">🛒 Магазин</button>
+<button onclick="openTab('chests')">🧰 Сундуки</button>
+<button onclick="openTab('upgrades')">⚡ Прокачка</button>
+<button onclick="openTab('world')">🌍 Локации</button>
+</div>
+
+<div class="panel section show" id="shop">
+<h3>🛒 Магазин</h3>
+
+<div class="item">
+<span>🍉 Арбузный скин</span>
+<button class="buyBtn" onclick="buySkin('🍉',30)">30</button>
+</div>
+
+<div class="item">
+<span>🦸 Герой</span>
+<button class="buyBtn" onclick="buySkin('🦸',40)">40</button>
+</div>
+
+<div class="item">
+<span>🌈 Радужный</span>
+<button class="buyBtn" onclick="buySkin('🌈',100)">100</button>
+</div>
+
+</div>
+
+<div class="panel section" id="chests">
+<h3>🧰 Сундуки</h3>
+
+<div class="item"><span>Rare Chest</span><button class="buyBtn" onclick="openChest('rare')">Открыть</button></div>
+<div class="item"><span>Epic Chest</span><button class="buyBtn" onclick="openChest('epic')">Открыть</button></div>
+<div class="item"><span>Mythic Chest</span><button class="buyBtn" onclick="openChest('mythic')">Открыть</button></div>
+<div class="item"><span>Legendary Chest</span><button class="buyBtn" onclick="openChest('legendary')">Открыть</button></div>
+<div class="item"><span>Ultra Chest</span><button class="buyBtn" onclick="openChest('ultra')">Открыть</button></div>
+
+</div>
+
+<div class="panel section" id="upgrades">
+<h3>⚡ Прокачка</h3>
+
+<div class="item">
+<span>💥 Урон +1</span>
+<button class="buyBtn" onclick="buyDamage()">50</button>
+</div>
+
+<div class="item">
+<span>🤖 Автоклик +1</span>
+<button class="buyBtn" onclick="buyAuto()">100</button>
+</div>
+
+<div class="item">
+<span>🍀 Удача +10%</span>
+<button class="buyBtn" onclick="buyLuck()">80</button>
+</div>
+
+</div>
+
+<div class="panel section" id="world">
+<h3>🌍 Локации</h3>
+
+<div class="item"><span>🌳 Деревня</span><button class="buyBtn" onclick="setZone(0)">GO</button></div>
+<div class="item"><span>🌋 Вулкан</span><button class="buyBtn" onclick="setZone(1)">GO</button></div>
+<div class="item"><span>🏜 Пустыня</span><button class="buyBtn" onclick="setZone(2)">GO</button></div>
+<div class="item"><span>🚀 Космос</span><button class="buyBtn" onclick="setZone(3)">GO</button></div>
+<div class="item"><span>🌈 Секрет</span><button class="buyBtn" onclick="setZone(4)">GO</button></div>
+
+</div>
+
+<div id="floatArea"></div>
+
+<footer></footer>
 
 <script>
+let game={
+coins:0,
+clicks:0,
+damage:1,
+auto:0,
+luck:1,
+skin:"👊",
+zone:0,
+keys:{
+rare:0,
+epic:0,
+mythic:0,
+legendary:0,
+ultra:0
+},
+boss:null
+};
 
-/* ===== CORE DATA ===== */
-let coins=0;
-let clicks=0;
-let loc="village";
+const zones=[
+{name:"Деревня",boss:"Goblin",hp:25,reward:40},
+{name:"Вулкан",boss:"Golem",hp:60,reward:90},
+{name:"Пустыня",boss:"Scorpion King",hp:120,reward:180},
+{name:"Космос",boss:"Void King",hp:250,reward:400},
+{name:"Секрет",boss:"Rainbow Titan",hp:500,reward:1000}
+];
 
-let boss=null;
-let phase=1;
-
-let dmg=1;
-let luck=1;
-
-/* ===== SAVE ===== */
 function save(){
- localStorage.setItem("fb",JSON.stringify({
-  coins,clicks,loc,dmg,luck
- }));
+localStorage.setItem("finalLootSave",JSON.stringify(game));
 }
 
-/* ===== LOAD ===== */
 function load(){
- let d=JSON.parse(localStorage.getItem("fb")||"null");
- if(!d) return;
- coins=d.coins;
- clicks=d.clicks;
- loc=d.loc;
- dmg=d.dmg;
- luck=d.luck;
+let data=localStorage.getItem("finalLootSave");
+if(data){
+try{
+game=JSON.parse(data);
+}catch(e){}
+}
 }
 
-/* ===== FLOAT TEXT ===== */
-function float(txt,x,y,col){
- let e=document.createElement("div");
- e.className="float";
- e.innerText=txt;
- e.style.left=x+"px";
- e.style.top=y+"px";
- e.style.color=col||"white";
- document.body.appendChild(e);
- setTimeout(()=>e.remove(),800);
+function rand(min,max){
+return Math.floor(Math.random()*(max-min+1))+min;
 }
 
-/* ===== CLICK ===== */
-function clicker(){
-
- coins+=1;
- clicks++;
-
- float("+1",200,200,"yellow");
-
- spawnBoss();
-
- if(boss){
-  boss.hp -= dmg;
-
-  document.getElementById("boss").classList.add("hit");
-
-  setTimeout(()=>{
-   document.getElementById("boss").classList.remove("hit");
-  },150);
-
-  float("-"+dmg,220,120,"red");
-
-  checkBoss();
- }
-
- update();
- save();
+function floatText(txt,color="#fff"){
+let d=document.createElement("div");
+d.className="float";
+d.innerText=txt;
+d.style.left=rand(40,300)+"px";
+d.style.top=rand(260,340)+"px";
+d.style.color=color;
+document.getElementById("floatArea").appendChild(d);
+setTimeout(()=>d.remove(),1000);
 }
 
-/* ===== BOSS SYSTEM (PHASES) ===== */
+function level(){
+return Math.floor(game.clicks/25)+1;
+}
+
+function updateUI(){
+coins.textContent=Math.floor(game.coins);
+lvl.textContent=level();
+zoneName.textContent=zones[game.zone].name;
+
+keysInfo.innerText=
+`🔑 Rare ${game.keys.rare} | Epic ${game.keys.epic} | Mythic ${game.keys.mythic} | Leg ${game.keys.legendary} | Ultra ${game.keys.ultra}`;
+
+clickBtn.innerText=game.skin;
+
+if(game.boss){
+bossBox.innerText=`👹 ${game.boss.name} HP ${game.boss.hp}/${game.boss.max}`;
+hpFill.style.width=(game.boss.hp/game.boss.max*100)+"%";
+}else{
+bossBox.innerText="👹 Босса нет";
+hpFill.style.width="0%";
+}
+}
+
 function spawnBoss(){
+if(game.boss) return;
 
- if(clicks%12!==0) return;
-
- const data={
-  village:{name:"Goblin",hp:20},
-  volcano:{name:"Golem",hp:50},
-  space:{name:"Void King",hp:120}
- };
-
- boss={...data[loc]};
- phase=1;
-
- document.getElementById("boss").innerText=
- "👹 "+boss.name+" HP "+boss.hp;
+let z=zones[game.zone];
+game.boss={
+name:z.boss,
+hp:z.hp,
+max:z.hp,
+reward:z.reward
+};
 }
 
-/* ===== BOSS LOGIC ===== */
-function checkBoss(){
+function clickAction(){
+game.coins+=1;
+game.clicks++;
 
- if(!boss) return;
+if(Math.random()<0.20*game.luck) game.keys.rare++;
+if(Math.random()<0.12*game.luck) game.keys.epic++;
+if(Math.random()<0.07*game.luck) game.keys.mythic++;
+if(Math.random()<0.03*game.luck) game.keys.legendary++;
+if(Math.random()<0.005*game.luck) game.keys.ultra++;
 
- if(boss.hp<=0){
-  coins+=50*phase;
-  phase++;
+if(game.clicks%15===0) spawnBoss();
 
-  if(phase<=3){
-   boss.hp=20*phase;
-  }else{
-   boss=null;
-   document.getElementById("boss").innerText="💀 DEFEATED";
-   return;
-  }
- }
+if(game.boss){
+game.boss.hp-=game.damage;
+floatText("-"+game.damage,"#ff4d4d");
 
- document.getElementById("boss").innerText=
- "👹 "+boss.name+" P"+phase+" HP "+boss.hp;
+if(game.boss.hp<=0){
+game.coins+=game.boss.reward;
+floatText("BOSS WIN +"+game.boss.reward,"#ffe066");
+game.boss=null;
+}
+}else{
+floatText("+1","#ffe066");
 }
 
-/* ===== CHEST ===== */
-function openBox(){
-
- let r=Math.random()*luck;
-
- let reward=0;
-
- if(r<0.4) reward=5;
- else if(r<0.7) reward=10;
- else reward=25;
-
- coins+=reward;
-
- float("+"+reward,200,200,"cyan");
-
- update();
- save();
+updateUI();
+save();
 }
 
-/* ===== PERKS ===== */
-function perk(t){
+clickBtn.onclick=clickAction;
 
- if(t==="power") dmg++;
- if(t==="luck") luck+=0.2;
-
- save();
+function openTab(id){
+document.querySelectorAll(".section").forEach(x=>x.classList.remove("show"));
+document.getElementById(id).classList.add("show");
 }
 
-/* ===== LOCATION ===== */
-function nextLoc(){
- let a=["village","volcano","space"];
- let i=a.indexOf(loc);
- loc=a[(i+1)%a.length];
- update();
- save();
+function buySkin(icon,price){
+if(game.coins<price)return;
+game.coins-=price;
+game.skin=icon;
+updateUI();
+save();
 }
 
-/* ===== UI ===== */
-function openShop(){shop.style.display="flex";}
-function openChest(){chest.style.display="flex";}
-function closeAll(){
- document.querySelectorAll(".modal").forEach(m=>m.style.display="none");
+function buyDamage(){
+if(game.coins<50)return;
+game.coins-=50;
+game.damage++;
+updateUI();
+save();
 }
 
-/* ===== LEVEL ===== */
-function lvl(){
- return Math.floor(clicks/10)+1;
+function buyAuto(){
+if(game.coins<100)return;
+game.coins-=100;
+game.auto++;
+updateUI();
+save();
 }
 
-/* ===== UPDATE ===== */
-function update(){
- coinsEl.innerText=coins;
- locEl.innerText=loc;
- lvlEl.innerText=lvl();
+function buyLuck(){
+if(game.coins<80)return;
+game.coins-=80;
+game.luck+=0.1;
+updateUI();
+save();
 }
 
-let coinsEl=document.getElementById("coins");
-let locEl=document.getElementById("loc");
-let lvlEl=document.getElementById("lvl");
+function setZone(i){
+game.zone=i;
+game.boss=null;
+updateUI();
+save();
+}
+
+function chestReward(type){
+let reward=0;
+
+if(type==="rare") reward=rand(5,15);
+if(type==="epic") reward=rand(15,35);
+if(type==="mythic") reward=rand(40,80);
+if(type==="legendary") reward=rand(90,160);
+if(type==="ultra") reward=rand(200,500);
+
+game.coins+=reward;
+floatText(type.toUpperCase()+" +"+reward,"#00ffff");
+}
+
+function openChest(type){
+if(game.keys[type]<=0)return;
+
+game.keys[type]--;
+chestReward(type);
+
+if(type==="legendary" && Math.random()<0.25){
+game.keys.mythic++;
+}
+
+if(type==="ultra" && Math.random()<0.30){
+game.skin="🌈";
+}
+
+updateUI();
+save();
+}
+
+setInterval(()=>{
+if(game.auto>0){
+game.coins+=game.auto;
+updateUI();
+save();
+}
+},1000);
 
 load();
-update();
-
+updateUI();
 </script>
 
 </body>
-  </html>
+</html>
