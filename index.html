@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>PRO+ Stable Game</title>
+<title>Test Click Game</title>
 
 <style>
 body{
@@ -19,170 +19,25 @@ body{
   border-radius:50%;
   border:none;
   font-size:40px;
-  margin-top:60px;
+  margin-top:100px;
   background:orange;
-}
-
-#boss{
-  margin-top:10px;
-  color:red;
-  font-weight:bold;
-}
-
-button{
-  cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🎮 Stable Game</h2>
+<h2>🎮 TEST GAME</h2>
 
-<div>💰 <span id="coins">0</span></div>
-<div>🌍 <span id="location">village</span></div>
-
-<div id="boss"></div>
-
+<!-- КНОПКА -->
 <button id="clickBtn" onclick="clicker()">👆</button>
-
-<br><br>
-
-<button onclick="openChest()">🧰 Chest</button>
-<button onclick="buySkin()">🛒 Skin</button>
 
 <script>
 
-let coins = 0;
-let clicks = 0;
-let boss = null;
-let location = "village";
-
-/* SAFE LOAD */
-function safeLoad(key, fallback){
-  try{
-    return JSON.parse(localStorage.getItem(key)) ?? fallback;
-  }catch(e){
-    return fallback;
-  }
-}
-
-/* DATA */
-let keys = safeLoad("keys", {
- rare:0, epic:0, mythic:0, legendary:0
-});
-
-let owned = safeLoad("owned", {});
-
-/* SAVE */
-function save(){
-  localStorage.setItem("coins", coins);
-  localStorage.setItem("keys", JSON.stringify(keys));
-  localStorage.setItem("owned", JSON.stringify(owned));
-}
-
-/* LOAD */
-function load(){
-  coins = Number(localStorage.getItem("coins") || 0);
-  update();
-}
-
-/* CLICK */
+/* КЛИК ФУНКЦИЯ */
 function clicker(){
-
-  coins++;
-  clicks++;
-
-  // keys safe
-  if(Math.random()<0.2) keys.rare++;
-  if(Math.random()<0.1) keys.epic++;
-
-  // boss safe
-  if(boss){
-    boss.hp--;
-
-    document.getElementById("boss").innerText =
-    "👹 "+boss.name+" HP: "+boss.hp;
-
-    if(boss.hp <= 0){
-      boss = null;
-      document.getElementById("boss").innerText = "💀 Boss defeated!";
-      coins += 50;
-    }
-
-    update();
-    save();
-    return;
-  }
-
-  if(clicks % 10 === 0){
-    spawnBoss();
-  }
-
-  update();
-  save();
+  alert("КЛИК РАБОТАЕТ");
 }
-
-/* BOSS */
-function spawnBoss(){
-
-  let list = {
-    village:{name:"Goblin",hp:10},
-    city:{name:"Robot",hp:25},
-    volcano:{name:"Golem",hp:40}
-  };
-
-  boss = {...list[location]};
-
-  if(!boss) boss = {name:"Unknown",hp:10};
-
-  document.getElementById("boss").innerText =
-  "👹 "+boss.name+" HP: "+boss.hp;
-}
-
-/* CHEST */
-function openChest(){
-
-  let r = Math.random();
-
-  if(r < 0.5){
-    coins += 5;
-    alert("💰 +5 coins");
-  } else {
-    keys.rare++;
-    alert("🔑 rare key");
-  }
-
-  update();
-  save();
-}
-
-/* SKIN */
-function buySkin(){
-
-  if(coins < 20){
-    alert("not enough coins");
-    return;
-  }
-
-  coins -= 20;
-  alert("skin bought!");
-
-  update();
-  save();
-}
-
-/* UPDATE SAFE */
-function update(){
-
-  document.getElementById("coins").innerText = coins;
-  document.getElementById("location").innerText = location;
-
-}
-
-/* START */
-load();
-update();
 
 </script>
 
