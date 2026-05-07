@@ -2,36 +2,82 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Final Clicker Game</title>
+<title>FINAL BOSS CLICKER</title>
 
 <style>
 body{
   margin:0;
   font-family:Arial;
-  background:#0f0f0f;
+  background:radial-gradient(circle,#0a0a0a,#000);
   color:white;
   text-align:center;
 }
 
+/* HUD */
+#hud{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  background:#111;
+  border-bottom:1px solid #333;
+}
+
+/* CLICK */
 #btn{
-  width:130px;
-  height:130px;
+  width:170px;
+  height:170px;
   border-radius:50%;
   border:none;
-  font-size:40px;
-  margin-top:50px;
-  background:linear-gradient(45deg,#ffb300,#ff6f00);
-  cursor:pointer;
+  font-size:45px;
+  margin-top:40px;
+  background:linear-gradient(45deg,#ffd54f,#ff6f00);
+  box-shadow:0 0 30px rgba(255,200,0,0.3);
+  transition:0.1s;
+}
+#btn:active{transform:scale(0.92);}
+
+/* FLOAT */
+.float{
+  position:absolute;
+  animation:up 0.8s linear forwards;
+  pointer-events:none;
 }
 
-.shop{
-  margin:5px;
-  padding:6px 10px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
+@keyframes up{
+  0%{transform:translateY(0);opacity:1;}
+  100%{transform:translateY(-80px);opacity:0;}
 }
 
+/* MENU */
+#menu{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  background:#111;
+  padding:10px;
+}
+
+/* MODAL */
+.modal{
+  position:fixed;
+  top:0;left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.85);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+
+.card{
+  background:#222;
+  padding:20px;
+  border-radius:12px;
+}
+
+/* BOSS */
 #boss{
   position:absolute;
   top:10px;
@@ -39,174 +85,230 @@ body{
   color:red;
   font-weight:bold;
 }
+
+/* EFFECT */
+.hit{
+  animation:hit 0.15s;
+}
+
+@keyframes hit{
+  0%{transform:scale(1);}
+  50%{transform:scale(1.2);}
+  100%{transform:scale(1);}
+}
 </style>
 </head>
 
 <body>
 
-<h2>🎮 FINAL GAME</h2>
-
-<div>💰 Монеты: <span id="coins">0</span></div>
-<div>⭐ Уровень: <span id="level">1</span></div>
+<!-- HUD -->
+<div id="hud">
+  <div>💰 <span id="coins">0</span></div>
+  <div>🌍 <span id="loc">village</span></div>
+  <div>⭐ Lv <span id="lvl">1</span></div>
+</div>
 
 <div id="boss"></div>
 
-<div>
-<button class="shop" onclick="buySkin('watermelon',30)">🍉 30</button>
-<button class="shop" onclick="buySkin('hero',40)">🦸 40</button>
+<button id="btn" onclick="clicker()">👊</button>
+
+<div id="menu">
+  <button onclick="openShop()">🛒</button>
+  <button onclick="openChest()">🧰</button>
+  <button onclick="nextLoc()">🌍</button>
 </div>
 
-<button id="btn" onclick="clicker()">🎮</button>
+<!-- SHOP -->
+<div id="shop" class="modal">
+  <div class="card">
+    <h3>Perks</h3>
+    <button onclick="perk('power')">💥 +DMG</button>
+    <button onclick="perk('luck')">🍀 +DROP</button>
+    <br><br>
+    <button onclick="closeAll()">Close</button>
+  </div>
+</div>
 
-<div>
-<button onclick="openChest('rare')">🧰 Rare</button>
-<button onclick="openChest('epic')">🧰 Epic</button>
+<!-- CHEST -->
+<div id="chest" class="modal">
+  <div class="card">
+    <h3>Chest</h3>
+    <button onclick="openBox()">Open</button>
+    <br><br>
+    <button onclick="closeAll()">Close</button>
+  </div>
 </div>
 
 <script>
 
-let coins = 0;
-let clicks = 0;
-let skin = "default";
+/* ===== CORE DATA ===== */
+let coins=0;
+let clicks=0;
+let loc="village";
 
-let keys = {
- rare:0,
- epic:0
-};
+let boss=null;
+let phase=1;
 
-let owned = {
- watermelon:false,
- hero:false
-};
+let dmg=1;
+let luck=1;
 
-let boss = null;
-
-/* SAVE */
+/* ===== SAVE ===== */
 function save(){
- localStorage.setItem("coins",coins);
- localStorage.setItem("clicks",clicks);
- localStorage.setItem("keys",JSON.stringify(keys));
- localStorage.setItem("owned",JSON.stringify(owned));
+ localStorage.setItem("fb",JSON.stringify({
+  coins,clicks,loc,dmg,luck
+ }));
 }
 
-/* LOAD */
+/* ===== LOAD ===== */
 function load(){
- coins = Number(localStorage.getItem("coins") || 0);
- clicks = Number(localStorage.getItem("clicks") || 0);
-
- keys = JSON.parse(localStorage.getItem("keys") || "null") || keys;
- owned = JSON.parse(localStorage.getItem("owned") || "null") || owned;
-
- update();
+ let d=JSON.parse(localStorage.getItem("fb")||"null");
+ if(!d) return;
+ coins=d.coins;
+ clicks=d.clicks;
+ loc=d.loc;
+ dmg=d.dmg;
+ luck=d.luck;
 }
 
-/* CLICK */
+/* ===== FLOAT TEXT ===== */
+function float(txt,x,y,col){
+ let e=document.createElement("div");
+ e.className="float";
+ e.innerText=txt;
+ e.style.left=x+"px";
+ e.style.top=y+"px";
+ e.style.color=col||"white";
+ document.body.appendChild(e);
+ setTimeout(()=>e.remove(),800);
+}
+
+/* ===== CLICK ===== */
 function clicker(){
 
- coins++;
+ coins+=1;
  clicks++;
 
- // drop keys
- if(Math.random()<0.2) keys.rare++;
- if(Math.random()<0.1) keys.epic++;
+ float("+1",200,200,"yellow");
 
- // boss spawn
- if(clicks % 12 === 0){
-  spawnBoss();
+ spawnBoss();
+
+ if(boss){
+  boss.hp -= dmg;
+
+  document.getElementById("boss").classList.add("hit");
+
+  setTimeout(()=>{
+   document.getElementById("boss").classList.remove("hit");
+  },150);
+
+  float("-"+dmg,220,120,"red");
+
+  checkBoss();
  }
 
- // boss damage
- if(boss){
-  boss.hp--;
+ update();
+ save();
+}
 
-  document.getElementById("boss").innerText =
-  "👹 "+boss.name+" HP: "+boss.hp;
+/* ===== BOSS SYSTEM (PHASES) ===== */
+function spawnBoss(){
 
-  if(boss.hp <= 0){
-   coins += 50;
-   boss = null;
-   document.getElementById("boss").innerText = "💀 defeated!";
+ if(clicks%12!==0) return;
+
+ const data={
+  village:{name:"Goblin",hp:20},
+  volcano:{name:"Golem",hp:50},
+  space:{name:"Void King",hp:120}
+ };
+
+ boss={...data[loc]};
+ phase=1;
+
+ document.getElementById("boss").innerText=
+ "👹 "+boss.name+" HP "+boss.hp;
+}
+
+/* ===== BOSS LOGIC ===== */
+function checkBoss(){
+
+ if(!boss) return;
+
+ if(boss.hp<=0){
+  coins+=50*phase;
+  phase++;
+
+  if(phase<=3){
+   boss.hp=20*phase;
+  }else{
+   boss=null;
+   document.getElementById("boss").innerText="💀 DEFEATED";
+   return;
   }
  }
 
- update();
- save();
+ document.getElementById("boss").innerText=
+ "👹 "+boss.name+" P"+phase+" HP "+boss.hp;
 }
 
-/* BOSS */
-function spawnBoss(){
- boss = {
-  name:"Goblin",
-  hp:10
- };
+/* ===== CHEST ===== */
+function openBox(){
 
- document.getElementById("boss").innerText =
- "👹 "+boss.name+" HP: "+boss.hp;
-}
+ let r=Math.random()*luck;
 
-/* CHEST */
-function openChest(type){
+ let reward=0;
 
- if(keys[type] <= 0){
-  return;
- }
+ if(r<0.4) reward=5;
+ else if(r<0.7) reward=10;
+ else reward=25;
 
- keys[type]--;
+ coins+=reward;
 
- let reward = "";
-
- let r = Math.random();
-
- if(type === "rare"){
-  if(r < 0.5) reward = "+5💰";
-  else reward = "nothing";
- }
-
- if(type === "epic"){
-  if(r < 0.5) reward = "+10💰";
-  else reward = "key";
- }
-
- if(reward.includes("5")) coins += 5;
- if(reward.includes("10")) coins += 10;
+ float("+"+reward,200,200,"cyan");
 
  update();
  save();
 }
 
-/* SKIN */
-function buySkin(name,price){
+/* ===== PERKS ===== */
+function perk(t){
 
- if(!owned[name]){
-  if(coins < price) return;
-  coins -= price;
-  owned[name] = true;
- }
-
- skin = name;
-
- if(name === "watermelon")
-  btn.innerText = "🍉";
-
- if(name === "hero")
-  btn.innerText = "🦸";
+ if(t==="power") dmg++;
+ if(t==="luck") luck+=0.2;
 
  save();
+}
+
+/* ===== LOCATION ===== */
+function nextLoc(){
+ let a=["village","volcano","space"];
+ let i=a.indexOf(loc);
+ loc=a[(i+1)%a.length];
  update();
+ save();
 }
 
-/* LEVEL */
-function level(){
- return Math.floor(clicks / 10) + 1;
+/* ===== UI ===== */
+function openShop(){shop.style.display="flex";}
+function openChest(){chest.style.display="flex";}
+function closeAll(){
+ document.querySelectorAll(".modal").forEach(m=>m.style.display="none");
 }
 
-/* UPDATE */
+/* ===== LEVEL ===== */
+function lvl(){
+ return Math.floor(clicks/10)+1;
+}
+
+/* ===== UPDATE ===== */
 function update(){
-
- document.getElementById("coins").innerText = coins;
- document.getElementById("level").innerText = level();
-
+ coinsEl.innerText=coins;
+ locEl.innerText=loc;
+ lvlEl.innerText=lvl();
 }
+
+let coinsEl=document.getElementById("coins");
+let locEl=document.getElementById("loc");
+let lvlEl=document.getElementById("lvl");
 
 load();
 update();
@@ -214,4 +316,4 @@ update();
 </script>
 
 </body>
-</html>
+  </html>
