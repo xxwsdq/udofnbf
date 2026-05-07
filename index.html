@@ -3,465 +3,314 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Final Loot Clicker</title>
+<title>Loot RPG FULL v3.1</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:Arial, sans-serif;
-}
-
 body{
-background:linear-gradient(180deg,#3ec9ff,#0d6efd);
-min-height:100vh;
-color:#fff;
-overflow-x:hidden;
-}
-
-#topbar{
-display:flex;
-justify-content:space-between;
-padding:12px;
-background:rgba(0,0,0,0.25);
-font-weight:bold;
-font-size:15px;
+margin:0;
+font-family:Arial;
+color:white;
+transition:0.5s;
 }
 
 .panel{
-background:rgba(255,255,255,0.15);
-border-radius:14px;
-padding:10px;
 margin:10px;
-backdrop-filter:blur(6px);
+padding:10px;
+background:rgba(0,0,0,0.35);
+border-radius:12px;
 }
 
-.center{
-text-align:center;
-}
+.center{text-align:center;}
 
-#clickBtn{
-width:170px;
-height:170px;
+#btn{
+width:160px;
+height:160px;
 border:none;
 border-radius:50%;
-font-size:65px;
+font-size:55px;
 cursor:pointer;
-background:linear-gradient(145deg,#ffe066,#ff9f1c);
-box-shadow:0 10px 0 #d97706;
-transition:0.08s;
-margin-top:15px;
 }
 
-#clickBtn:active{
-transform:translateY(8px);
-box-shadow:0 2px 0 #d97706;
-}
-
-#bossBox{
-margin-top:15px;
-font-size:18px;
-font-weight:bold;
-}
-
-.hpbar{
-width:90%;
-height:18px;
-background:#333;
-border-radius:10px;
-margin:auto;
-overflow:hidden;
-margin-top:8px;
-}
-
-.hpfill{
-height:100%;
-background:#ff4d4d;
-width:100%;
-transition:0.2s;
-}
-
-.menu{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-padding:10px;
-}
-
-.menu button{
-padding:12px;
+.menu button,
+button{
+margin:4px;
+padding:8px 12px;
 border:none;
-border-radius:12px;
-font-weight:bold;
-cursor:pointer;
-background:#ffffff;
-color:#111;
-}
-
-.section{
-display:none;
-}
-
-.show{
-display:block;
-}
-
-.item{
-background:rgba(255,255,255,0.12);
-padding:8px;
-margin:7px 0;
-border-radius:10px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
-
-.buyBtn{
-border:none;
-padding:7px 10px;
 border-radius:8px;
 cursor:pointer;
 font-weight:bold;
-background:#ffe066;
-color:#111;
 }
 
-#floatArea{
+.section{display:none;}
+.show{display:block;}
+
+.item{
+margin:6px 0;
+padding:8px;
+background:rgba(255,255,255,0.12);
+border-radius:8px;
+}
+
+.locked{opacity:0.4;}
+
+/* 🧰 3D CHEST */
+.chestWrap{
+perspective:800px;
+margin:20px auto;
+width:120px;
+height:120px;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.chest3d{
+font-size:80px;
+transform-style:preserve-3d;
+transition:0.6s;
+cursor:pointer;
+}
+
+.chestIdle{
+animation:float 2s infinite ease-in-out;
+}
+
+@keyframes float{
+0%{transform:rotateY(0deg) translateY(0px);}
+50%{transform:rotateY(20deg) translateY(-5px);}
+100%{transform:rotateY(0deg) translateY(0px);}
+}
+
+.chestOpen{
+animation:openChest3D 0.8s forwards;
+}
+
+@keyframes openChest3D{
+0%{transform:rotateX(0deg) scale(1);}
+40%{transform:rotateX(-20deg) scale(1.1);}
+70%{transform:rotateX(-60deg) scale(1.2);}
+100%{transform:rotateX(-90deg) scale(1.1);}
+}
+
+.chestGlow{
+text-shadow:0 0 20px gold;
+}
+
+/* 💥 reward */
+.rewardPopup{
 position:fixed;
-left:0;
-top:0;
-width:100%;
-height:100%;
-pointer-events:none;
-overflow:hidden;
+top:40%;
+left:50%;
+transform:translate(-50%,-50%);
+background:rgba(0,0,0,0.85);
+padding:15px;
+border-radius:10px;
+font-size:20px;
+animation:pop 1s forwards;
 }
 
-.float{
-position:absolute;
-font-weight:bold;
-animation:up 1s linear forwards;
-}
-
-@keyframes up{
-0%{opacity:1;transform:translateY(0);}
-100%{opacity:0;transform:translateY(-70px);}
-}
-
-.small{
-font-size:13px;
-opacity:0.9;
-}
-
-footer{
-height:40px;
+@keyframes pop{
+0%{opacity:0;transform:translate(-50%,-60%) scale(0.5);}
+50%{opacity:1;transform:translate(-50%,-50%) scale(1.2);}
+100%{opacity:0;transform:translate(-50%,-40%) scale(1);}
 }
 </style>
 </head>
+
 <body>
 
-<div id="topbar">
-<div>💰 <span id="coins">0</span></div>
-<div>⭐ Lv <span id="lvl">1</span></div>
-<div>🌍 <span id="zoneName">Деревня</span></div>
-</div>
-
 <div class="panel center">
+<h2>🎮 LOOT RPG v3.1</h2>
 
-<h2>🎮 FINAL LOOT CLICKER</h2>
+<div>👤 <span id="nameDisplay"></span></div>
 
-<button id="clickBtn">👊</button>
+<button id="btn">👊</button>
 
-<div id="bossBox">👹 Босса нет</div>
-
-<div class="hpbar">
-<div class="hpfill" id="hpFill"></div>
+<div>💰 <span id="coins">0</span></div>
+<div>👆 <span id="clicks">0</span></div>
+<div>🌍 <span id="locName"></span></div>
+<div>👹 <span id="bossInfo"></span></div>
 </div>
 
-<div class="small" id="keysInfo">
-🔑 Rare 0 | Epic 0 | Mythic 0 | Leg 0 | Ultra 0
+<div class="menu center">
+<button onclick="tab('quests')">🎯</button>
+<button onclick="tab('chests')">🧰</button>
+<button onclick="tab('skins')">🎨</button>
+<button onclick="tab('world')">🌍</button>
+<button onclick="tab('lb')">🏆</button>
 </div>
 
+<!-- QUESTS -->
+<div class="panel section show" id="quests">
+<h3>🎯 Квесты</h3>
+<div id="questList"></div>
 </div>
 
-<div class="menu">
-<button onclick="openTab('shop')">🛒 Магазин</button>
-<button onclick="openTab('chests')">🧰 Сундуки</button>
-<button onclick="openTab('upgrades')">⚡ Прокачка</button>
-<button onclick="openTab('world')">🌍 Локации</button>
-</div>
-
-<div class="panel section show" id="shop">
-<h3>🛒 Магазин</h3>
-
-<div class="item">
-<span>🍉 Арбузный скин</span>
-<button class="buyBtn" onclick="buySkin('🍉',30)">30</button>
-</div>
-
-<div class="item">
-<span>🦸 Герой</span>
-<button class="buyBtn" onclick="buySkin('🦸',40)">40</button>
-</div>
-
-<div class="item">
-<span>🌈 Радужный</span>
-<button class="buyBtn" onclick="buySkin('🌈',100)">100</button>
-</div>
-
-</div>
-
+<!-- CHESTS -->
 <div class="panel section" id="chests">
-<h3>🧰 Сундуки</h3>
+<h3>🧰 Сундук</h3>
 
-<div class="item"><span>Rare Chest</span><button class="buyBtn" onclick="openChest('rare')">Открыть</button></div>
-<div class="item"><span>Epic Chest</span><button class="buyBtn" onclick="openChest('epic')">Открыть</button></div>
-<div class="item"><span>Mythic Chest</span><button class="buyBtn" onclick="openChest('mythic')">Открыть</button></div>
-<div class="item"><span>Legendary Chest</span><button class="buyBtn" onclick="openChest('legendary')">Открыть</button></div>
-<div class="item"><span>Ultra Chest</span><button class="buyBtn" onclick="openChest('ultra')">Открыть</button></div>
-
+<div class="chestWrap">
+  <div id="chest" class="chest3d">🧰</div>
 </div>
 
-<div class="panel section" id="upgrades">
-<h3>⚡ Прокачка</h3>
-
-<div class="item">
-<span>💥 Урон +1</span>
-<button class="buyBtn" onclick="buyDamage()">50</button>
+<button onclick="openChestAnim('rare')">Open Chest</button>
 </div>
 
-<div class="item">
-<span>🤖 Автоклик +1</span>
-<button class="buyBtn" onclick="buyAuto()">100</button>
+<!-- SKINS -->
+<div class="panel section" id="skins">
+<h3>🎨 Скины</h3>
+<button onclick="buySkin('default')">👊 Default</button>
+<button onclick="buySkin('fire')">🔥 Fire</button>
+<button onclick="buySkin('ice')">❄️ Ice</button>
+<button onclick="buySkin('gold')">💛 Gold</button>
+<button onclick="buySkin('rainbow')">🌈 Legendary</button>
+<div id="skinInfo"></div>
 </div>
 
-<div class="item">
-<span>🍀 Удача +10%</span>
-<button class="buyBtn" onclick="buyLuck()">80</button>
-</div>
-
-</div>
-
+<!-- WORLD -->
 <div class="panel section" id="world">
 <h3>🌍 Локации</h3>
-
-<div class="item"><span>🌳 Деревня</span><button class="buyBtn" onclick="setZone(0)">GO</button></div>
-<div class="item"><span>🌋 Вулкан</span><button class="buyBtn" onclick="setZone(1)">GO</button></div>
-<div class="item"><span>🏜 Пустыня</span><button class="buyBtn" onclick="setZone(2)">GO</button></div>
-<div class="item"><span>🚀 Космос</span><button class="buyBtn" onclick="setZone(3)">GO</button></div>
-<div class="item"><span>🌈 Секрет</span><button class="buyBtn" onclick="setZone(4)">GO</button></div>
-
+<div id="worldButtons"></div>
 </div>
 
-<div id="floatArea"></div>
-
-<footer></footer>
+<!-- LB -->
+<div class="panel section" id="lb">
+<h3>🏆 Лидерборд</h3>
+<button onclick="saveScore()">💾 Save</button>
+<button onclick="loadLeaderboard()">🔄 Load</button>
+<div id="lbList"></div>
+</div>
 
 <script>
-let game={
-coins:0,
-clicks:0,
-damage:1,
-auto:0,
-luck:1,
-skin:"👊",
-zone:0,
-keys:{
-rare:0,
-epic:0,
-mythic:0,
-legendary:0,
-ultra:0
-},
-boss:null
+
+/* FIREBASE */
+const firebaseConfig={
+apiKey:"AIzaSy...",
+authDomain:"click-74bb1.firebaseapp.com",
+projectId:"click-74bb1",
 };
 
-const zones=[
-{name:"Деревня",boss:"Goblin",hp:25,reward:40},
-{name:"Вулкан",boss:"Golem",hp:60,reward:90},
-{name:"Пустыня",boss:"Scorpion King",hp:120,reward:180},
-{name:"Космос",boss:"Void King",hp:250,reward:400},
-{name:"Секрет",boss:"Rainbow Titan",hp:500,reward:1000}
-];
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
 
-function save(){
-localStorage.setItem("finalLootSave",JSON.stringify(game));
+/* PLAYER */
+let playerName=prompt("Ник:")||"Player";
+nameDisplay.innerText=playerName;
+
+/* DATA */
+let coins=0, clicks=0, openedChests=0;
+
+/* SKINS */
+let skin="default";
+const skins={default:"👊",fire:"🔥",ice:"❄️",gold:"💛",rainbow:"🌈"};
+const prices={fire:500,ice:1500,gold:5000,rainbow:25000,default:0};
+const rarity={default:"Common",fire:"Rare",ice:"Epic",gold:"Mythic",rainbow:"Legendary"};
+
+/* WORLD */
+let order=["forest","desert","ice","volcano","space"];
+let unlocked=0;
+let current="forest";
+
+const loc={
+forest:{name:"🌲 Лес",bg:"linear-gradient(#2e8b57,#145a32)",mult:1},
+desert:{name:"🏜 Пустыня",bg:"linear-gradient(#f7c873,#d98b2b)",mult:1.5},
+ice:{name:"❄️ Лёд",bg:"linear-gradient(#cfefff,#5dade2)",mult:2},
+volcano:{name:"🌋 Вулкан",bg:"linear-gradient(#ff512f,#240b36)",mult:3},
+space:{name:"🚀 Космос",bg:"linear-gradient(#000,#3a0ca3)",mult:5}
+};
+
+/* BOSS */
+let defeated={forest:false,desert:false,ice:false,volcano:false,space:false};
+let boss={active:false,hp:0,rew:0,name:""};
+
+const bosses={
+forest:{hp:1000,rew:500,name:"Лесной"},
+desert:{hp:2000,rew:1000,name:"Пустынный"},
+ice:{hp:4000,rew:2000,name:"Ледяной"},
+volcano:{hp:7000,rew:4000,name:"Вулкан"},
+space:{hp:10000,rew:10000,name:"Космос"}
+};
+
+/* CLICK */
+btn.onclick=()=>{
+
+coins++; clicks++;
+
+updateUI();
+updateQuests();
+
+if(boss.active){
+boss.hp--;
+if(boss.hp<=0) winBoss();
+}else{
+if(clicks%50===0) spawnBoss();
 }
 
-function load(){
-let data=localStorage.getItem("finalLootSave");
-if(data){
-try{
-game=JSON.parse(data);
-}catch(e){}
-}
+};
+
+/* CHEST ANIMATION */
+function openChestAnim(){
+
+let chest=document.getElementById("chest");
+
+chest.classList.add("chestOpen","chestGlow");
+
+setTimeout(()=>{
+chest.classList.remove("chestOpen","chestGlow");
+},800);
+
+let reward=Math.floor((10+Math.random()*100)*loc[current].mult);
+coins+=reward;
+
+showReward(reward);
+updateUI();
+
 }
 
-function rand(min,max){
-return Math.floor(Math.random()*(max-min+1))+min;
-}
-
-function floatText(txt,color="#fff"){
+/* REWARD */
+function showReward(a){
 let d=document.createElement("div");
-d.className="float";
-d.innerText=txt;
-d.style.left=rand(40,300)+"px";
-d.style.top=rand(260,340)+"px";
-d.style.color=color;
-document.getElementById("floatArea").appendChild(d);
+d.className="rewardPopup";
+d.innerText="🎁 +"+a;
+document.body.appendChild(d);
 setTimeout(()=>d.remove(),1000);
 }
 
-function level(){
-return Math.floor(game.clicks/25)+1;
-}
-
-function updateUI(){
-coins.textContent=Math.floor(game.coins);
-lvl.textContent=level();
-zoneName.textContent=zones[game.zone].name;
-
-keysInfo.innerText=
-`🔑 Rare ${game.keys.rare} | Epic ${game.keys.epic} | Mythic ${game.keys.mythic} | Leg ${game.keys.legendary} | Ultra ${game.keys.ultra}`;
-
-clickBtn.innerText=game.skin;
-
-if(game.boss){
-bossBox.innerText=`👹 ${game.boss.name} HP ${game.boss.hp}/${game.boss.max}`;
-hpFill.style.width=(game.boss.hp/game.boss.max*100)+"%";
-}else{
-bossBox.innerText="👹 Босса нет";
-hpFill.style.width="0%";
-}
-}
-
+/* BOSS */
 function spawnBoss(){
-if(game.boss) return;
+if(defeated[current])return;
 
-let z=zones[game.zone];
-game.boss={
-name:z.boss,
-hp:z.hp,
-max:z.hp,
-reward:z.reward
-};
+let b=bosses[current];
+
+boss={active:true,hp:b.hp,rew:b.rew,name:b.name};
+
+alert("👹 "+b.name);
 }
 
-function clickAction(){
-game.coins+=1;
-game.clicks++;
+function winBoss(){
+boss.active=false;
+coins+=boss.rew;
+defeated[current]=true;
 
-if(Math.random()<0.20*game.luck) game.keys.rare++;
-if(Math.random()<0.12*game.luck) game.keys.epic++;
-if(Math.random()<0.07*game.luck) game.keys.mythic++;
-if(Math.random()<0.03*game.luck) game.keys.legendary++;
-if(Math.random()<0.005*game.luck) game.keys.ultra++;
+if(unlocked<order.length-1)unlocked++;
 
-if(game.clicks%15===0) spawnBoss();
-
-if(game.boss){
-game.boss.hp-=game.damage;
-floatText("-"+game.damage,"#ff4d4d");
-
-if(game.boss.hp<=0){
-game.coins+=game.boss.reward;
-floatText("BOSS WIN +"+game.boss.reward,"#ffe066");
-game.boss=null;
-}
-}else{
-floatText("+1","#ffe066");
+renderWorld();
 }
 
-updateUI();
-save();
+/* UI */
+function updateUI(){
+coinsDisplay.innerText=coins;
+clicksDisplay.innerText=clicks;
+locName.innerText=loc[current].name;
+
+document.body.style.background=loc[current].bg;
 }
 
-clickBtn.onclick=clickAction;
-
-function openTab(id){
-document.querySelectorAll(".section").forEach(x=>x.classList.remove("show"));
-document.getElementById(id).classList.add("show");
-}
-
-function buySkin(icon,price){
-if(game.coins<price)return;
-game.coins-=price;
-game.skin=icon;
-updateUI();
-save();
-}
-
-function buyDamage(){
-if(game.coins<50)return;
-game.coins-=50;
-game.damage++;
-updateUI();
-save();
-}
-
-function buyAuto(){
-if(game.coins<100)return;
-game.coins-=100;
-game.auto++;
-updateUI();
-save();
-}
-
-function buyLuck(){
-if(game.coins<80)return;
-game.coins-=80;
-game.luck+=0.1;
-updateUI();
-save();
-}
-
-function setZone(i){
-game.zone=i;
-game.boss=null;
-updateUI();
-save();
-}
-
-function chestReward(type){
-let reward=0;
-
-if(type==="rare") reward=rand(5,15);
-if(type==="epic") reward=rand(15,35);
-if(type==="mythic") reward=rand(40,80);
-if(type==="legendary") reward=rand(90,160);
-if(type==="ultra") reward=rand(200,500);
-
-game.coins+=reward;
-floatText(type.toUpperCase()+" +"+reward,"#00ffff");
-}
-
-function openChest(type){
-if(game.keys[type]<=0)return;
-
-game.keys[type]--;
-chestReward(type);
-
-if(type==="legendary" && Math.random()<0.25){
-game.keys.mythic++;
-}
-
-if(type==="ultra" && Math.random()<0.30){
-game.skin="🌈";
-}
-
-updateUI();
-save();
-}
-
-setInterval(()=>{
-if(game.auto>0){
-game.coins+=game.auto;
-updateUI();
-save();
-}
-},1000);
-
-load();
+/* INIT */
 updateUI();
 </script>
 
