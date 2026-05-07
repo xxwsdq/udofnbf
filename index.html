@@ -24,19 +24,19 @@
       font-size: 18px;
     }
 
-    /* 🔥 КРАСИВАЯ КНОПКА */
+    /* Кнопка круглая и красивая */
     #btn {
       position: absolute;
-      padding: 18px 30px;
-      font-size: 20px;
+      padding: 20px;
+      font-size: 18px;
+      width: 80px;
+      height: 80px;
       border: none;
-      border-radius: 15px;
+      border-radius: 50%; /* делает кнопку круглой */
       cursor: pointer;
-
       background: linear-gradient(45deg, #00ff99, #00ccff);
       color: black;
       font-weight: bold;
-
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
       transition: transform 0.1s, box-shadow 0.2s;
     }
@@ -58,7 +58,7 @@
 
 <body>
 
-<h1>🎮 Поймай кнопку</h1>
+<h1>Поймай кнопку</h1>
 
 <div id="coins">Монеты: 0</div>
 
@@ -68,32 +68,36 @@
   <button class="shop" onclick="buySkin('blue', 20)">Синий</button>
 </div>
 
-<button id="btn" onclick="win()">Нажми меня</button>
+<button id="btn" onclick="win()">Нажми</button>
 
 <script>
   const btn = document.getElementById("btn");
   const coinsText = document.getElementById("coins");
 
-  // 💾 загрузка данных
+  // Загрузка сохранённых данных из localStorage
   let coins = Number(localStorage.getItem("coins")) || 0;
   let skin = localStorage.getItem("skin") || "green";
 
+  // Функция для сохранения монет и скина
   function save() {
     localStorage.setItem("coins", coins);
     localStorage.setItem("skin", skin);
   }
 
+  // Обновление монет на экране и сохранение
   function update() {
     coinsText.innerText = "Монеты: " + coins;
     save();
   }
 
+  // Применение выбранного скина к кнопке
   function applySkin() {
     if (skin === "green") btn.style.background = "#00ff99";
     if (skin === "red") btn.style.background = "red";
     if (skin === "blue") btn.style.background = "blue";
   }
 
+  // Двигаем кнопку в случайные координаты
   function moveButton() {
     const x = Math.random() * (window.innerWidth - 100);
     const y = Math.random() * (window.innerHeight - 100);
@@ -102,12 +106,14 @@
     btn.style.top = y + "px";
   }
 
+  // Логика при клике на кнопку (добавление монеты)
   function win() {
     coins += 1;
     update();
     moveButton();
   }
 
+  // Покупка скинов
   function buySkin(type, price) {
     if (coins < price) {
       alert("Не хватает монет 😢");
@@ -116,13 +122,14 @@
 
     coins -= price;
     skin = type;
-
     update();
     applySkin();
   }
 
+  // Запускаем движение кнопки с интервалом
   setInterval(moveButton, 700);
 
+  // Стартовые действия
   moveButton();
   applySkin();
   update();
