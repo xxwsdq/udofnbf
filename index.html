@@ -1,230 +1,303 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Мини игра</title>
+<meta charset="UTF-8">
+<title>PRO+ Loot Game</title>
 
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      overflow: hidden;
-      font-family: Arial;
-      background: #111;
-      color: white;
-      text-align: center;
-    }
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:radial-gradient(circle,#1a1a1a,#000);
+  color:white;
+  overflow:hidden;
+}
 
-    h1 {
-      margin-top: 10px;
-      font-size: 18px;
-    }
+/* TOP BAR */
+#topBar{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  background:#111;
+  border-bottom:1px solid #333;
+  font-size:14px;
+}
 
-    #coins {
-      margin-top: 10px;
-      font-size: 18px;
-    }
+/* CLICK BUTTON */
+#clickBtn{
+  width:130px;
+  height:130px;
+  border-radius:50%;
+  border:none;
+  font-size:40px;
+  margin-top:80px;
+  background:linear-gradient(45deg,#ffcc00,#ff6600);
+  box-shadow:0 0 20px rgba(255,200,0,0.5);
+}
 
-    /* 🎮 кнопка */
-    #btn {
-      position: absolute;
-      width: 80px;
-      height: 80px;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
+/* MENU */
+#menu{
+  position:fixed;
+  bottom:0;
+  width:100%;
+  display:flex;
+  justify-content:space-around;
+  background:#111;
+  padding:10px 0;
+  border-top:1px solid #333;
+}
 
-      font-weight: bold;
-      color: black;
+.menuBtn{
+  background:none;
+  border:none;
+  color:white;
+}
 
-      background: linear-gradient(45deg, #00ff99, #00ccff);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+/* MODALS */
+.modal{
+  position:fixed;
+  top:0;left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.85);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
 
-      transition: transform 0.1s, box-shadow 0.2s;
-    }
+.card{
+  background:#222;
+  padding:20px;
+  border-radius:10px;
+  text-align:center;
+}
 
-    #btn:active {
-      transform: scale(0.9);
-    }
-
-    button.shop {
-      margin: 5px;
-      padding: 8px 12px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    /* 🎉 эффект покупки */
-    #buyEffect {
-      position: absolute;
-      top: 20%;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 30px;
-      font-weight: bold;
-      color: yellow;
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* 💥 конфетти */
-    #confetti {
-      position: absolute;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-    }
-  </style>
+/* BOSS */
+#boss{
+  margin-top:10px;
+  color:red;
+}
+</style>
 </head>
 
 <body>
 
-<h1>🎮 Игра</h1>
-
-<div id="coins">Монеты: 0</div>
-
-<div>
-  <button class="shop" onclick="buySkin('green', 0)">Зелёный (0)</button>
-  <button class="shop" onclick="buySkin('red', 10)">Красный (10)</button>
-  <button class="shop" onclick="buySkin('blue', 20)">Синий (20)</button>
+<!-- TOP -->
+<div id="topBar">
+  <div>💰 <span id="coins">0</span></div>
+  <div>🌍 <span id="location">village</span></div>
+  <div>⭐ Lv <span id="level">1</span></div>
 </div>
 
-<button id="btn" onclick="win()">+</button>
+<div id="boss"></div>
 
-<div id="buyEffect">КУПЛЕНО 🎉</div>
-<canvas id="confetti"></canvas>
+<!-- CLICK -->
+<div style="text-align:center;">
+  <button id="clickBtn" onclick="clicker()">👆</button>
+</div>
 
-<!-- 🎵 музыка -->
-<audio id="bgmusic" loop>
-  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b7c2f.mp3" type="audio/mpeg">
-</audio>
+<!-- MENU -->
+<div id="menu">
+  <button class="menuBtn" onclick="openShop()">🛒 Shop</button>
+  <button class="menuBtn" onclick="openChests()">🧰 Chests</button>
+</div>
+
+<!-- SHOP -->
+<div id="shopModal" class="modal">
+  <div class="card">
+    <h3>Shop</h3>
+    <button onclick="buySkin('watermelon',30)">🍉 30</button>
+    <button onclick="buySkin('hero',40)">🦸 40</button>
+    <br><br>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- CHESTS -->
+<div id="chestModal" class="modal">
+  <div class="card">
+    <h3>Chests</h3>
+    <button onclick="openChest('rare')">Rare</button>
+    <button onclick="openChest('epic')">Epic</button>
+    <button onclick="openChest('mythic')">Mythic</button>
+    <button onclick="openChest('legendary')">Legendary</button>
+    <br><br>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
 
 <script>
-const btn = document.getElementById("btn");
-const coinsText = document.getElementById("coins");
-const buyEffect = document.getElementById("buyEffect");
-const music = document.getElementById("bgmusic");
 
-const canvas = document.getElementById("confetti");
-const ctx = canvas.getContext("2d");
+let coins=0;
+let clicks=0;
+let skin="default";
+let location="village";
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let coins = Number(localStorage.getItem("coins")) || 0;
-let skin = localStorage.getItem("skin") || "green";
-
-let owned = JSON.parse(localStorage.getItem("owned")) || {
-  green: true,
-  red: false,
-  blue: false
+let keys={
+ rare:0,
+ epic:0,
+ mythic:0,
+ legendary:0
 };
 
-function save() {
-  localStorage.setItem("coins", coins);
-  localStorage.setItem("skin", skin);
-  localStorage.setItem("owned", JSON.stringify(owned));
+let owned={
+ watermelon:false,
+ hero:false
+};
+
+let boss=null;
+
+/* BOSSES */
+const bosses={
+ village:{name:"Гоблин",hp:20,reward:"rare"},
+ city:{name:"Кибер-Страж",hp:50,reward:"epic"},
+ volcano:{name:"Голем",hp:100,reward:"mythic"},
+ desert:{name:"Титан",hp:150,reward:"legendary"},
+ space:{name:"Хаос",hp:300,reward:"coins"}
+};
+
+/* SAVE */
+function save(){
+ localStorage.setItem("coins",coins);
+ localStorage.setItem("keys",JSON.stringify(keys));
+ localStorage.setItem("owned",JSON.stringify(owned));
 }
 
-function update() {
-  coinsText.innerText = "Монеты: " + coins;
-  save();
+/* LOAD */
+function load(){
+ coins=Number(localStorage.getItem("coins"))||0;
+ keys=JSON.parse(localStorage.getItem("keys"))||keys;
+ owned=JSON.parse(localStorage.getItem("owned"))||owned;
+ update();
 }
 
-function applySkin() {
-  if (skin === "green") btn.style.background = "#00ff99";
-  if (skin === "red") btn.style.background = "red";
-  if (skin === "blue") btn.style.background = "blue";
-}
+/* CLICK */
+function clicker(){
 
-function moveButton() {
-  const x = Math.random() * (window.innerWidth - 100);
-  const y = Math.random() * (window.innerHeight - 100);
-  btn.style.left = x + "px";
-  btn.style.top = y + "px";
-}
+ coins++;
+ clicks++;
 
-function win() {
-  coins += 1;
+ if(Math.random()<0.2) keys.rare++;
+ if(Math.random()<0.12) keys.epic++;
+ if(Math.random()<0.07) keys.mythic++;
+ if(Math.random()<0.03) keys.legendary++;
+
+ if(boss){
+  boss.hp--;
+  document.getElementById("boss").innerText=
+  "👹 "+boss.name+" HP:"+boss.hp;
+
+  if(boss.hp<=0) defeatBoss();
   update();
-  moveButton();
-  startMusic();
+  return;
+ }
+
+ if(clicks%15===0) spawnBoss();
+
+ update();
+ save();
 }
 
-function buySkin(type, price) {
-  if (!owned[type]) {
-    if (coins < price) {
-      alert("Не хватает монет 😢");
-      return;
-    }
-    coins -= price;
-    owned[type] = true;
-  }
-
-  skin = type;
-  applySkin();
-  update();
-
-  showEffect();
-  createConfetti();
+/* BOSS */
+function spawnBoss(){
+ boss={...bosses[location]};
+ document.getElementById("boss").innerText=
+ "👹 "+boss.name+" HP:"+boss.hp;
 }
 
-/* 🎉 эффект */
-function showEffect() {
-  buyEffect.style.opacity = "1";
-  buyEffect.style.transform = "translateX(-50%) scale(1.3)";
+function defeatBoss(){
+ alert("Босс побеждён!");
 
-  setTimeout(() => {
-    buyEffect.style.opacity = "0";
-    buyEffect.style.transform = "translateX(-50%) scale(1)";
-  }, 600);
+ if(boss.reward==="coins") coins+=50;
+ else keys[boss.reward]++;
+
+ boss=null;
+ document.getElementById("boss").innerText="";
+ save();
+ update();
 }
 
-/* 🎵 музыка */
-function startMusic() {
-  music.volume = 0.3;
-  music.play().catch(() => {});
+/* CHESTS */
+function openChest(type){
+
+ if(keys[type]<=0){
+  alert("нет ключа");
+  return;
+ }
+
+ keys[type]--;
+
+ let r=Math.random();
+ let reward="";
+
+ if(type==="rare"){
+  if(r<0.3) reward="+1💰";
+  else reward="скин";
+ }
+
+ if(type==="epic"){
+  reward="+10💰";
+ }
+
+ if(type==="mythic"){
+  reward="+20💰";
+ }
+
+ if(type==="legendary"){
+  reward="+30💰";
+ }
+
+ coins+=Math.floor(Math.random()*5);
+
+ alert("🎁 "+reward);
+
+ save();
+ update();
 }
 
-/* 💥 конфетти */
-let particles = [];
+/* SHOP */
+function buySkin(name,price){
 
-function createConfetti() {
-  for (let i = 0; i < 80; i++) {
-    particles.push({
-      x: canvas.width / 2,
-      y: canvas.height / 3,
-      dx: (Math.random() - 0.5) * 8,
-      dy: Math.random() * -8,
-      size: Math.random() * 6 + 2,
-      color: `hsl(${Math.random() * 360},100%,50%)`
-    });
-  }
-  animate();
+ if(!owned[name]){
+  if(coins<price) return;
+  coins-=price;
+  owned[name]=true;
+ }
+
+ skin=name;
+
+ if(name==="watermelon") clickBtn.innerText="🍉";
+ if(name==="hero") clickBtn.innerText="🦸";
+
+ save();
+ update();
 }
 
-function animate() {
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  particles.forEach((p,i) => {
-    p.x += p.dx;
-    p.y += p.dy;
-    p.dy += 0.2;
-
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x,p.y,p.size,p.size);
-
-    if (p.y > canvas.height) particles.splice(i,1);
-  });
-
-  if (particles.length > 0) requestAnimationFrame(animate);
+/* UI */
+function openShop(){
+ document.getElementById("shopModal").style.display="flex";
 }
 
-/* старт */
-setInterval(moveButton, 700);
-moveButton();
-applySkin();
+function openChests(){
+ document.getElementById("chestModal").style.display="flex";
+}
+
+function closeModal(){
+ document.querySelectorAll(".modal").forEach(m=>{
+  m.style.display="none";
+ });
+}
+
+/* UPDATE */
+function update(){
+ document.getElementById("coins").innerText=coins;
+ document.getElementById("location").innerText=location;
+ document.getElementById("level").innerText=Math.floor(clicks/10)+1;
+}
+
+load();
 update();
+
 </script>
 
 </body>
