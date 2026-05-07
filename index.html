@@ -2,35 +2,67 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Loot RPG v6 NOT BORING</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realm Breakers v5</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
-background:#0c0f1a;
+background:#0b0f1d;
 color:white;
+display:flex;
+justify-content:center;
+}
+
+#login,#game{
+width:100%;
+max-width:500px;
 }
 
 .panel{
 margin:10px;
-padding:10px;
+padding:12px;
 background:rgba(255,255,255,0.06);
-border-radius:12px;
+border-radius:14px;
+box-sizing:border-box;
+}
+
+h2,h3{
+margin:5px 0;
+font-size:18px;
+}
+
+input, select{
+width:100%;
+padding:12px;
+margin:5px 0;
+border:none;
+border-radius:10px;
+font-size:16px;
+box-sizing:border-box;
 }
 
 button{
-padding:10px;
-margin:5px;
+width:100%;
+padding:14px;
+margin:6px 0;
 border:none;
-border-radius:10px;
-cursor:pointer;
+border-radius:12px;
+font-size:16px;
 font-weight:bold;
+cursor:pointer;
+background:#2b6cff;
+color:white;
+}
+
+button:active{
+transform:scale(0.98);
 }
 
 .bar{
 width:100%;
-height:12px;
+height:14px;
 background:#333;
 border-radius:10px;
 overflow:hidden;
@@ -42,151 +74,275 @@ width:100%;
 background:red;
 transition:0.2s;
 }
+
+.item{
+padding:6px;
+margin:5px 0;
+background:rgba(255,255,255,0.1);
+border-radius:10px;
+font-size:14px;
+}
+
+/* TABS */
+.tab{
+display:none;
+padding-bottom:90px;
+}
+
+.tab.active{
+display:block;
+}
+
+/* NAV */
+.nav{
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+display:flex;
+background:#111827;
+padding:8px;
+gap:8px;
+}
+
+.nav button{
+flex:1;
+padding:12px;
+border-radius:10px;
+background:#1f2937;
+font-size:14px;
+}
+
+.nav button:active{
+transform:scale(0.97);
+}
+
+/* MOBILE */
+@media (max-width:600px){
+button{font-size:17px;padding:16px;}
+}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+<div id="login">
 <div class="panel">
-<h2>🎮 LOOT RPG v6</h2>
+<h2>⚔️ Realm Breakers v5</h2>
+
 <input id="nick" placeholder="ник">
+
+<select id="class">
+<option value="warrior">⚔️ Воин</option>
+<option value="mage">🔥 Маг</option>
+<option value="rogue">🗡 Вор</option>
+</select>
+
 <button onclick="start()">Играть</button>
 </div>
+</div>
 
+<!-- GAME -->
 <div id="game" style="display:none;">
+
+<!-- GAME TAB -->
+<div id="gameTab" class="tab active">
 
 <div class="panel">
 👤 <span id="name"></span><br>
+🏷 класс: <span id="className"></span><br>
 💰 <span id="coins"></span> |
 ⭐ Lv <span id="level"></span>
 </div>
 
 <div class="panel">
-⚔️ Сила: <span id="str"></span> |
-🛡 Защита: <span id="def"></span> |
+❤️ HP: <span id="hp"></span>/<span id="hpMax"></span>
+<div class="bar"><div class="fill" id="hpFill"></div></div>
+</div>
+
+<div class="panel">
+<button onclick="fight()">⚔️ бой</button>
+<button onclick="skill()">⚡ скилл</button>
+<button onclick="chest()">🧰 сундук</button>
+</div>
+
+</div>
+
+<!-- INVENTORY -->
+<div id="invTab" class="tab">
+<div class="panel">
+<h3>🎒 инвентарь</h3>
+<div id="inv"></div>
+</div>
+</div>
+
+<!-- STATS -->
+<div id="statsTab" class="tab">
+<div class="panel">
+<h3>📊 статы</h3>
+⚔️ Сила: <span id="str"></span><br>
+🛡 Защита: <span id="def"></span><br>
 🍀 Удача: <span id="luck"></span>
 </div>
-
-<div class="panel">
-<button onclick="safeFarm()">🟢 безопасный фарм</button>
-<button onclick="riskFarm()">🔴 риск фарм (x3)</button>
-<button onclick="openChest()">🧰 сундук</button>
-<button onclick="boss()">👹 босс</button>
 </div>
 
-<div class="panel">
-<h3>👹 БОСС</h3>
-<div class="bar"><div class="fill" id="bossFill"></div></div>
-<button onclick="attackBoss()">⚔️ удар</button>
 </div>
 
+<!-- NAV -->
+<div class="nav">
+<button onclick="showTab('gameTab')">⚔️ Игра</button>
+<button onclick="showTab('invTab')">🎒 Инвентарь</button>
+<button onclick="showTab('statsTab')">📊 Статы</button>
 </div>
 
 <script>
 
 /* PLAYER */
 let player="";
+let playerClass="warrior";
+
 let coins=0;
 let level=1;
+
+let hp=100;
+let hpMax=100;
 
 let str=1;
 let def=1;
 let luck=1;
 
-/* BOSS */
-let bossHP=100;
-let bossMax=100;
+let inv=[];
+
+let skillCD=false;
 
 /* START */
 function start(){
 
-player=document.getElementById("nick").value||"Player";
+player=document.getElementById("nick").value||"Hero";
+playerClass=document.getElementById("class").value;
 
+applyClass();
+
+document.getElementById("login").style.display="none";
 document.getElementById("game").style.display="block";
 
+load();
+update();
+renderInv();
+}
+
+/* CLASS */
+function applyClass(){
+
+if(playerClass==="warrior"){
+hpMax=130;
+def+=2;
+}
+
+if(playerClass==="mage"){
+str+=3;
+hpMax=80;
+}
+
+if(playerClass==="rogue"){
+luck+=3;
+hpMax=90;
+}
+}
+
+/* FIGHT */
+function fight(){
+
+let enemy=8+Math.random()*10;
+
+let dmg=str;
+
+if(playerClass==="mage") dmg*=1.2;
+
+if(playerClass==="rogue" && Math.random()<0.2){
+enemy=0;
+}
+
+hp-=enemy-def;
+
+coins+=Math.floor(dmg);
+
+if(hp<=0){
+hp=hpMax;
+coins=Math.max(0,coins-30);
+}
+
+levelUp();
 update();
 }
 
-/* SAFE FARM */
-function safeFarm(){
+/* SKILL */
+function skill(){
 
-let gain=5;
+if(skillCD) return;
 
-coins+=gain;
-gainStats();
-
-update();
+if(playerClass==="warrior"){
+hp+=25;
+if(hp>hpMax) hp=hpMax;
 }
 
-/* RISK FARM */
-function riskFarm(){
-
-let chance=Math.random();
-
-if(chance < 0.6){
-coins+=15*luck;
-}else{
-coins-=10;
+if(playerClass==="mage"){
+coins+=str*3;
 }
 
-gainStats();
-update();
+if(playerClass==="rogue"){
+coins+=luck*10;
+}
+
+skillCD=true;
+setTimeout(()=>skillCD=false,3000);
 }
 
 /* CHEST */
-function openChest(){
+function chest(){
 
 let r=Math.random();
 
-if(r<0.5){
-coins+=10;
-}else if(r<0.8){
-coins+=30;
-str++;
-}else if(r<0.95){
-coins+=80;
-luck++;
-}else{
-coins=0; // 💀 пустой/провал
-}
+if(r<0.5) coins+=10;
+else if(r<0.8){ coins+=40; str++; inv.push("weapon"); }
+else if(r<0.95){ coins+=80; luck++; inv.push("ring"); }
+else{ coins=0; hp-=20; inv.push("curse"); }
 
+renderInv();
 update();
 }
 
-/* BOSS */
-function attackBoss(){
+/* LEVEL */
+function levelUp(){
 
-let dmg=str*2;
-
-bossHP-=dmg;
-
-if(bossHP<=0){
-coins+=100;
-level++;
-bossMax+=50;
-bossHP=bossMax;
-}
-
-update();
-}
-
-/* STATS */
-function gainStats(){
-
-if(coins>50){
+if(coins>=100){
 level++;
 coins=0;
 
+hpMax+=10;
+hp=hpMax;
 str++;
 def++;
-luck++;
 }
+}
+
+/* INVENTORY */
+function renderInv(){
+
+invBox.innerHTML="";
+
+inv.forEach(i=>{
+invBox.innerHTML+=`<div class="item">🎁 ${i}</div>`;
+});
 }
 
 /* UI */
 function update(){
 
 nameSpan.innerText=player;
+className.innerText=playerClass;
+
 coinsSpan.innerText=coins;
 levelSpan.innerText=level;
 
@@ -194,7 +350,49 @@ strSpan.innerText=str;
 defSpan.innerText=def;
 luckSpan.innerText=luck;
 
-bossFill.style.width=(bossHP/bossMax*100)+"%";
+hpSpan.innerText=hp;
+hpMaxSpan.innerText=hpMax;
+
+hpFill.style.width=(hp/hpMax*100)+"%";
+}
+
+/* TABS */
+function showTab(tab){
+
+document.querySelectorAll(".tab").forEach(t=>{
+t.classList.remove("active");
+});
+
+document.getElementById(tab).classList.add("active");
+}
+
+/* SAVE */
+function save(){
+localStorage.setItem("coins",coins);
+localStorage.setItem("level",level);
+localStorage.setItem("hp",hp);
+localStorage.setItem("hpMax",hpMax);
+localStorage.setItem("str",str);
+localStorage.setItem("def",def);
+localStorage.setItem("luck",luck);
+localStorage.setItem("class",playerClass);
+localStorage.setItem("inv",JSON.stringify(inv));
+}
+
+/* LOAD */
+function load(){
+coins=+localStorage.getItem("coins")||0;
+level=+localStorage.getItem("level")||1;
+hp=+localStorage.getItem("hp")||100;
+hpMax=+localStorage.getItem("hpMax")||100;
+
+str=+localStorage.getItem("str")||1;
+def=+localStorage.getItem("def")||1;
+luck=+localStorage.getItem("luck")||1;
+
+playerClass=localStorage.getItem("class")||playerClass;
+
+inv=JSON.parse(localStorage.getItem("inv")||"[]");
 }
 
 </script>
