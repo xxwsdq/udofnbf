@@ -24,26 +24,26 @@
       font-size: 18px;
     }
 
-    /* Кнопка круглая и красивая */
+    /* 🎮 кнопка */
     #btn {
       position: absolute;
-      padding: 20px;
-      font-size: 18px;
       width: 80px;
       height: 80px;
       border: none;
-      border-radius: 50%; /* делает кнопку круглой */
+      border-radius: 50%;
       cursor: pointer;
-      background: linear-gradient(45deg, #00ff99, #00ccff);
-      color: black;
+
       font-weight: bold;
+      color: black;
+
+      background: linear-gradient(45deg, #00ff99, #00ccff);
       box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+
       transition: transform 0.1s, box-shadow 0.2s;
     }
 
     #btn:active {
       transform: scale(0.9);
-      box-shadow: 0 5px 10px rgba(0,0,0,0.4);
     }
 
     button.shop {
@@ -54,6 +54,7 @@
       cursor: pointer;
     }
 
+    /* 🎉 эффект покупки */
     #buyEffect {
       position: absolute;
       top: 20%;
@@ -66,6 +67,7 @@
       pointer-events: none;
     }
 
+    /* 💥 конфетти */
     #confetti {
       position: absolute;
       top: 0;
@@ -77,131 +79,152 @@
 
 <body>
 
-<h1>🎮 Поймай кнопку</h1>
+<h1>🎮 Игра</h1>
 
 <div id="coins">Монеты: 0</div>
 
 <div>
-  <button class="shop" onclick="buySkin('green', 0)">Зелёный (0 монет)</button>
-  <button class="shop" onclick="buySkin('red', 10)">Красный (10 монет)</button>
-  <button class="shop" onclick="buySkin('blue', 20)">Синий (20 монет)</button>
+  <button class="shop" onclick="buySkin('green', 0)">Зелёный (0)</button>
+  <button class="shop" onclick="buySkin('red', 10)">Красный (10)</button>
+  <button class="shop" onclick="buySkin('blue', 20)">Синий (20)</button>
 </div>
 
-<button id="btn" onclick="win()">Нажми меня</button>
+<button id="btn" onclick="win()">+</button>
 
 <div id="buyEffect">КУПЛЕНО 🎉</div>
 <canvas id="confetti"></canvas>
 
+<!-- 🎵 музыка -->
+<audio id="bgmusic" loop>
+  <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_115b9b7c2f.mp3" type="audio/mpeg">
+</audio>
+
 <script>
-  const btn = document.getElementById("btn");
-  const coinsText = document.getElementById("coins");
-  const buyEffect = document.getElementById("buyEffect");
-  const canvas = document.getElementById("confetti");
-  const ctx = canvas.getContext("2d");
+const btn = document.getElementById("btn");
+const coinsText = document.getElementById("coins");
+const buyEffect = document.getElementById("buyEffect");
+const music = document.getElementById("bgmusic");
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+const canvas = document.getElementById("confetti");
+const ctx = canvas.getContext("2d");
 
-  let coins = Number(localStorage.getItem("coins")) || 0;
-  let skin = localStorage.getItem("skin") || "green";
-  let owned = JSON.parse(localStorage.getItem("owned")) || {
-    green: true,
-    red: false,
-    blue: false
-  };
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-  function save() {
-    localStorage.setItem("coins", coins);
-    localStorage.setItem("skin", skin);
-    localStorage.setItem("owned", JSON.stringify(owned));
-  }
+let coins = Number(localStorage.getItem("coins")) || 0;
+let skin = localStorage.getItem("skin") || "green";
 
-  function update() {
-    coinsText.innerText = "Монеты: " + coins;
-    save();
-  }
+let owned = JSON.parse(localStorage.getItem("owned")) || {
+  green: true,
+  red: false,
+  blue: false
+};
 
-  function applySkin() {
-    if (skin === "green") btn.style.background = "#00ff99";
-    if (skin === "red") btn.style.background = "red";
-    if (skin === "blue") btn.style.background = "blue";
-  }
+function save() {
+  localStorage.setItem("coins", coins);
+  localStorage.setItem("skin", skin);
+  localStorage.setItem("owned", JSON.stringify(owned));
+}
 
-  function moveButton() {
-    const x = Math.random() * (window.innerWidth - 100);
-    const y = Math.random() * (window.innerHeight - 100);
-    btn.style.left = x + "px";
-    btn.style.top = y + "px";
-  }
+function update() {
+  coinsText.innerText = "Монеты: " + coins;
+  save();
+}
 
-  function win() {
-    coins += 1;
-    update();
-    moveButton();
-  }
+function applySkin() {
+  if (skin === "green") btn.style.background = "#00ff99";
+  if (skin === "red") btn.style.background = "red";
+  if (skin === "blue") btn.style.background = "blue";
+}
 
-  function showBuyEffect() {
-    buyEffect.style.opacity = "1";
-    buyEffect.style.transform = "translateX(-50%) scale(1.3)";
-    setTimeout(() => {
-      buyEffect.style.opacity = "0";
-      buyEffect.style.transform = "translateX(-50%) scale(1)";
-    }, 600);
-  }
+function moveButton() {
+  const x = Math.random() * (window.innerWidth - 100);
+  const y = Math.random() * (window.innerHeight - 100);
+  btn.style.left = x + "px";
+  btn.style.top = y + "px";
+}
 
-  function createConfetti() {
-    for (let i = 0; i < 80; i++) {
-      particles.push({
-        x: canvas.width / 2,
-        y: canvas.height / 3,
-        dx: (Math.random() - 0.5) * 8,
-        dy: Math.random() * -8,
-        size: Math.random() * 6 + 2,
-        color: `hsl(${Math.random() * 360}, 100%, 50%)`
-      });
-    }
-    animateConfetti();
-  }
-
-  let particles = [];
-
-  function animateConfetti() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    particles.forEach((p, i) => {
-      p.x += p.dx;
-      p.y += p.dy;
-      p.dy += 0.2; // гравитация
-      ctx.fillStyle = p.color;
-      ctx.fillRect(p.x, p.y, p.size, p.size);
-      if (p.y > canvas.height) {
-        particles.splice(i, 1);
-      }
-    });
-    if (particles.length > 0) {
-      requestAnimationFrame(animateConfetti);
-    }
-  }
-
-  function buySkin(type, price) {
-    if (!owned[type]) {
-      if (coins < price) {
-        alert("Не хватает монет 😢");
-        return;
-      }
-      coins -= price;
-      owned[type] = true;
-    }
-    skin = type;
-    applySkin();
-    update();
-    showBuyEffect();
-    createConfetti();
-  }
-
-  setInterval(moveButton, 700);
+function win() {
+  coins += 1;
+  update();
   moveButton();
+  startMusic();
+}
+
+function buySkin(type, price) {
+  if (!owned[type]) {
+    if (coins < price) {
+      alert("Не хватает монет 😢");
+      return;
+    }
+    coins -= price;
+    owned[type] = true;
+  }
+
+  skin = type;
   applySkin();
   update();
+
+  showEffect();
+  createConfetti();
+}
+
+/* 🎉 эффект */
+function showEffect() {
+  buyEffect.style.opacity = "1";
+  buyEffect.style.transform = "translateX(-50%) scale(1.3)";
+
+  setTimeout(() => {
+    buyEffect.style.opacity = "0";
+    buyEffect.style.transform = "translateX(-50%) scale(1)";
+  }, 600);
+}
+
+/* 🎵 музыка */
+function startMusic() {
+  music.volume = 0.3;
+  music.play().catch(() => {});
+}
+
+/* 💥 конфетти */
+let particles = [];
+
+function createConfetti() {
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: canvas.width / 2,
+      y: canvas.height / 3,
+      dx: (Math.random() - 0.5) * 8,
+      dy: Math.random() * -8,
+      size: Math.random() * 6 + 2,
+      color: `hsl(${Math.random() * 360},100%,50%)`
+    });
+  }
+  animate();
+}
+
+function animate() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  particles.forEach((p,i) => {
+    p.x += p.dx;
+    p.y += p.dy;
+    p.dy += 0.2;
+
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x,p.y,p.size,p.size);
+
+    if (p.y > canvas.height) particles.splice(i,1);
+  });
+
+  if (particles.length > 0) requestAnimationFrame(animate);
+}
+
+/* старт */
+setInterval(moveButton, 700);
+moveButton();
+applySkin();
+update();
 </script>
 
 </body>
