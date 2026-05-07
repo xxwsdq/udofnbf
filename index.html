@@ -53,83 +53,152 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
+    #buyEffect {
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 30px;
+      font-weight: bold;
+      color: yellow;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #confetti {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 
 <body>
 
-<h1>Поймай кнопку</h1>
+<h1>🎮 Поймай кнопку</h1>
 
 <div id="coins">Монеты: 0</div>
 
 <div>
-  <button class="shop" onclick="buySkin('green', 0)">Зелёный</button>
-  <button class="shop" onclick="buySkin('red', 10)">Красный</button>
-  <button class="shop" onclick="buySkin('blue', 20)">Синий</button>
+  <button class="shop" onclick="buySkin('green', 0)">Зелёный (0 монет)</button>
+  <button class="shop" onclick="buySkin('red', 10)">Красный (10 монет)</button>
+  <button class="shop" onclick="buySkin('blue', 20)">Синий (20 монет)</button>
 </div>
 
-<button id="btn" onclick="win()">Нажми</button>
+<button id="btn" onclick="win()">Нажми меня</button>
+
+<div id="buyEffect">КУПЛЕНО 🎉</div>
+<canvas id="confetti"></canvas>
 
 <script>
   const btn = document.getElementById("btn");
   const coinsText = document.getElementById("coins");
+  const buyEffect = document.getElementById("buyEffect");
+  const canvas = document.getElementById("confetti");
+  const ctx = canvas.getContext("2d");
 
-  // Загрузка сохранённых данных из localStorage
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
   let coins = Number(localStorage.getItem("coins")) || 0;
   let skin = localStorage.getItem("skin") || "green";
+  let owned = JSON.parse(localStorage.getItem("owned")) || {
+    green: true,
+    red: false,
+    blue: false
+  };
 
-  // Функция для сохранения монет и скина
   function save() {
     localStorage.setItem("coins", coins);
     localStorage.setItem("skin", skin);
+    localStorage.setItem("owned", JSON.stringify(owned));
   }
 
-  // Обновление монет на экране и сохранение
   function update() {
     coinsText.innerText = "Монеты: " + coins;
     save();
   }
 
-  // Применение выбранного скина к кнопке
   function applySkin() {
     if (skin === "green") btn.style.background = "#00ff99";
     if (skin === "red") btn.style.background = "red";
     if (skin === "blue") btn.style.background = "blue";
   }
 
-  // Двигаем кнопку в случайные координаты
   function moveButton() {
     const x = Math.random() * (window.innerWidth - 100);
     const y = Math.random() * (window.innerHeight - 100);
-
     btn.style.left = x + "px";
     btn.style.top = y + "px";
   }
 
-  // Логика при клике на кнопку (добавление монеты)
   function win() {
     coins += 1;
     update();
     moveButton();
   }
 
-  // Покупка скинов
-  function buySkin(type, price) {
-    if (coins < price) {
-      alert("Не хватает монет 😢");
-      return;
-    }
-
-    coins -= price;
-    skin = type;
-    update();
-    applySkin();
+  function showBuyEffect() {
+    buyEffect.style.opacity = "1";
+    buyEffect.style.transform = "translateX(-50%) scale(1.3)";
+    setTimeout(() => {
+      buyEffect.style.opacity = "0";
+      buyEffect.style.transform = "translateX(-50%) scale(1)";
+    }, 600);
   }
 
-  // Запускаем движение кнопки с интервалом
-  setInterval(moveButton, 700);
+  function createConfetti() {
+    for (let i = 0; i < 80; i++) {
+      particles.push({
+        x: canvas.width / 2,
+        y: canvas.height / 3,
+        dx: (Math.random() - 0.5) * 8,
+        dy: Math.random() * -8,
+        size: Math.random() * 6 + 2,
+        color: `hsl(${Math.random() * 360}, 100%, 50%)`
+      });
+    }
+    animateConfetti();
+  }
 
-  // Стартовые действия
+  let particles = [];
+
+  function animateConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach((p, i) => {
+      p.x += p.dx;
+      p.y += p.dy;
+      p.dy += 0.2; // гравитация
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x, p.y, p.size, p.size);
+      if (p.y > canvas.height) {
+        particles.splice(i, 1);
+      }
+    });
+    if (particles.length > 0) {
+      requestAnimationFrame(animateConfetti);
+    }
+  }
+
+  function buySkin(type, price) {
+    if (!owned[type]) {
+      if (coins < price) {
+        alert("Не хватает монет 😢");
+        return;
+      }
+      coins -= price;
+      owned[type] = true;
+    }
+    skin = type;
+    applySkin();
+    update();
+    showBuyEffect();
+    createConfetti();
+  }
+
+  setInterval(moveButton, 700);
   moveButton();
   applySkin();
   update();
