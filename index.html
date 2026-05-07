@@ -61,18 +61,24 @@
   const btn = document.getElementById("btn");
   const coinsText = document.getElementById("coins");
 
-  // 🔥 загружаем сохранённые данные
+  // Загружаем сохранённые данные или задаём начальные значения
   let coins = localStorage.getItem("coins");
+  let ownedSkins = JSON.parse(localStorage.getItem("ownedSkins"));
   let skin = localStorage.getItem("skin");
 
   if (coins === null) coins = 0;
   else coins = parseInt(coins);
 
-  if (skin === null) skin = "green";
+  if (ownedSkins === null) ownedSkins = {};
+  // Если нет сохранённых скинов, изначально владеем зелёным
+  if (Object.keys(ownedSkins).length === 0) ownedSkins['green'] = true;
+
+  if (skin === null) skin = 'green';
 
   function save() {
     localStorage.setItem("coins", coins);
     localStorage.setItem("skin", skin);
+    localStorage.setItem("ownedSkins", JSON.stringify(ownedSkins));
   }
 
   function updateCoins() {
@@ -101,14 +107,19 @@
   }
 
   function buySkin(type, price) {
-    if (coins < price) {
+    if (!ownedSkins[type] && coins < price) {
       alert("Не хватает монет 😢");
       return;
     }
 
-    coins -= price;
-    skin = type;
+    if (!ownedSkins[type]) {
+      // Покупка нового скина
+      coins -= price;
+      ownedSkins[type] = true;
+      alert("Скин " + type + " куплен!");
+    }
 
+    skin = type;
     updateCoins();
     applySkin();
   }
