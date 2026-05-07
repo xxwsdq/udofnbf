@@ -2,18 +2,16 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Loot RPG FULL v3.1</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loot RPG v4 Clean</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
 color:white;
-transition:0.5s;
+transition:0.4s;
+background:linear-gradient(#2e8b57,#145a32);
 }
 
 .panel{
@@ -30,12 +28,11 @@ width:160px;
 height:160px;
 border:none;
 border-radius:50%;
-font-size:55px;
+font-size:50px;
 cursor:pointer;
 }
 
-.menu button,
-button{
+.menu button{
 margin:4px;
 padding:8px 12px;
 border:none;
@@ -54,53 +51,20 @@ background:rgba(255,255,255,0.12);
 border-radius:8px;
 }
 
-.locked{opacity:0.4;}
-
-/* 🧰 3D CHEST */
-.chestWrap{
-perspective:800px;
-margin:20px auto;
-width:120px;
-height:120px;
-display:flex;
-justify-content:center;
-align-items:center;
+/* 🧰 chest */
+.chest{
+font-size:70px;
+display:inline-block;
+transition:0.3s;
 }
 
-.chest3d{
-font-size:80px;
-transform-style:preserve-3d;
-transition:0.6s;
-cursor:pointer;
-}
-
-.chestIdle{
-animation:float 2s infinite ease-in-out;
-}
-
-@keyframes float{
-0%{transform:rotateY(0deg) translateY(0px);}
-50%{transform:rotateY(20deg) translateY(-5px);}
-100%{transform:rotateY(0deg) translateY(0px);}
-}
-
-.chestOpen{
-animation:openChest3D 0.8s forwards;
-}
-
-@keyframes openChest3D{
-0%{transform:rotateX(0deg) scale(1);}
-40%{transform:rotateX(-20deg) scale(1.1);}
-70%{transform:rotateX(-60deg) scale(1.2);}
-100%{transform:rotateX(-90deg) scale(1.1);}
-}
-
-.chestGlow{
+.chest.open{
+transform:scale(1.3) rotateX(40deg);
 text-shadow:0 0 20px gold;
 }
 
-/* 💥 reward */
-.rewardPopup{
+/* 🎁 popup */
+.popup{
 position:fixed;
 top:40%;
 left:50%;
@@ -108,39 +72,36 @@ transform:translate(-50%,-50%);
 background:rgba(0,0,0,0.85);
 padding:15px;
 border-radius:10px;
-font-size:20px;
-animation:pop 1s forwards;
+animation:fade 1s forwards;
 }
 
-@keyframes pop{
+@keyframes fade{
 0%{opacity:0;transform:translate(-50%,-60%) scale(0.5);}
-50%{opacity:1;transform:translate(-50%,-50%) scale(1.2);}
+50%{opacity:1;}
 100%{opacity:0;transform:translate(-50%,-40%) scale(1);}
 }
+
 </style>
 </head>
 
 <body>
 
 <div class="panel center">
-<h2>🎮 LOOT RPG v3.1</h2>
+<h2>🎮 LOOT RPG v4 CLEAN</h2>
 
-<div>👤 <span id="nameDisplay"></span></div>
+<div>👤 <span id="name"></span></div>
 
 <button id="btn">👊</button>
 
 <div>💰 <span id="coins">0</span></div>
 <div>👆 <span id="clicks">0</span></div>
-<div>🌍 <span id="locName"></span></div>
-<div>👹 <span id="bossInfo"></span></div>
 </div>
 
+<!-- MENU -->
 <div class="menu center">
 <button onclick="tab('quests')">🎯</button>
 <button onclick="tab('chests')">🧰</button>
-<button onclick="tab('skins')">🎨</button>
-<button onclick="tab('world')">🌍</button>
-<button onclick="tab('lb')">🏆</button>
+<button onclick="tab('shop')">🎨</button>
 </div>
 
 <!-- QUESTS -->
@@ -152,166 +113,155 @@ animation:pop 1s forwards;
 <!-- CHESTS -->
 <div class="panel section" id="chests">
 <h3>🧰 Сундук</h3>
-
-<div class="chestWrap">
-  <div id="chest" class="chest3d">🧰</div>
+<div class="chest" id="chest">🧰</div><br>
+<button onclick="openChest()">Открыть</button>
 </div>
 
-<button onclick="openChestAnim('rare')">Open Chest</button>
-</div>
-
-<!-- SKINS -->
-<div class="panel section" id="skins">
-<h3>🎨 Скины</h3>
+<!-- SHOP -->
+<div class="panel section" id="shop">
+<h3>🎨 Магазин (скины)</h3>
 <button onclick="buySkin('default')">👊 Default</button>
-<button onclick="buySkin('fire')">🔥 Fire</button>
-<button onclick="buySkin('ice')">❄️ Ice</button>
-<button onclick="buySkin('gold')">💛 Gold</button>
-<button onclick="buySkin('rainbow')">🌈 Legendary</button>
-<div id="skinInfo"></div>
-</div>
-
-<!-- WORLD -->
-<div class="panel section" id="world">
-<h3>🌍 Локации</h3>
-<div id="worldButtons"></div>
-</div>
-
-<!-- LB -->
-<div class="panel section" id="lb">
-<h3>🏆 Лидерборд</h3>
-<button onclick="saveScore()">💾 Save</button>
-<button onclick="loadLeaderboard()">🔄 Load</button>
-<div id="lbList"></div>
+<button onclick="buySkin('fire')">🔥 Fire (500)</button>
+<button onclick="buySkin('ice')">❄️ Ice (1500)</button>
 </div>
 
 <script>
 
-/* FIREBASE */
-const firebaseConfig={
-apiKey:"AIzaSy...",
-authDomain:"click-74bb1.firebaseapp.com",
-projectId:"click-74bb1",
-};
-
-firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-
-/* PLAYER */
-let playerName=prompt("Ник:")||"Player";
-nameDisplay.innerText=playerName;
-
 /* DATA */
-let coins=0, clicks=0, openedChests=0;
+let coins=0;
+let clicks=0;
+let opened=0;
+
+let player=prompt("Ник:")||"Player";
+name.innerText=player;
 
 /* SKINS */
 let skin="default";
-const skins={default:"👊",fire:"🔥",ice:"❄️",gold:"💛",rainbow:"🌈"};
-const prices={fire:500,ice:1500,gold:5000,rainbow:25000,default:0};
-const rarity={default:"Common",fire:"Rare",ice:"Epic",gold:"Mythic",rainbow:"Legendary"};
-
-/* WORLD */
-let order=["forest","desert","ice","volcano","space"];
-let unlocked=0;
-let current="forest";
-
-const loc={
-forest:{name:"🌲 Лес",bg:"linear-gradient(#2e8b57,#145a32)",mult:1},
-desert:{name:"🏜 Пустыня",bg:"linear-gradient(#f7c873,#d98b2b)",mult:1.5},
-ice:{name:"❄️ Лёд",bg:"linear-gradient(#cfefff,#5dade2)",mult:2},
-volcano:{name:"🌋 Вулкан",bg:"linear-gradient(#ff512f,#240b36)",mult:3},
-space:{name:"🚀 Космос",bg:"linear-gradient(#000,#3a0ca3)",mult:5}
+const skins={
+default:"👊",
+fire:"🔥",
+ice:"❄️"
 };
 
-/* BOSS */
-let defeated={forest:false,desert:false,ice:false,volcano:false,space:false};
-let boss={active:false,hp:0,rew:0,name:""};
-
-const bosses={
-forest:{hp:1000,rew:500,name:"Лесной"},
-desert:{hp:2000,rew:1000,name:"Пустынный"},
-ice:{hp:4000,rew:2000,name:"Ледяной"},
-volcano:{hp:7000,rew:4000,name:"Вулкан"},
-space:{hp:10000,rew:10000,name:"Космос"}
+const prices={
+fire:500,
+ice:1500
 };
+
+/* QUESTS */
+let quests=[
+{t:"100 кликов",need:100,type:"clicks",reward:100,done:false},
+{t:"500 монет",need:500,type:"coins",reward:200,done:false},
+{t:"3 сундука",need:3,type:"chest",reward:300,done:false}
+];
 
 /* CLICK */
 btn.onclick=()=>{
 
-coins++; clicks++;
+coins++;
+clicks++;
 
 updateUI();
 updateQuests();
 
-if(boss.active){
-boss.hp--;
-if(boss.hp<=0) winBoss();
-}else{
-if(clicks%50===0) spawnBoss();
-}
-
 };
 
-/* CHEST ANIMATION */
-function openChestAnim(){
+/* TAB SYSTEM */
+function tab(id){
 
-let chest=document.getElementById("chest");
+document.querySelectorAll(".section").forEach(s=>{
+s.classList.remove("show");
+});
 
-chest.classList.add("chestOpen","chestGlow");
-
-setTimeout(()=>{
-chest.classList.remove("chestOpen","chestGlow");
-},800);
-
-let reward=Math.floor((10+Math.random()*100)*loc[current].mult);
-coins+=reward;
-
-showReward(reward);
-updateUI();
+document.getElementById(id).classList.add("show");
 
 }
 
-/* REWARD */
-function showReward(a){
+/* CHEST */
+function openChest(){
+
+let c=document.getElementById("chest");
+
+c.classList.add("open");
+
+setTimeout(()=>c.classList.remove("open"),400);
+
+let reward=Math.floor(Math.random()*100)+10;
+
+coins+=reward;
+opened++;
+
+showPopup(reward);
+
+updateUI();
+updateQuests();
+
+}
+
+/* POPUP */
+function showPopup(a){
+
 let d=document.createElement("div");
-d.className="rewardPopup";
+d.className="popup";
 d.innerText="🎁 +"+a;
 document.body.appendChild(d);
+
 setTimeout(()=>d.remove(),1000);
+
 }
 
-/* BOSS */
-function spawnBoss(){
-if(defeated[current])return;
+/* QUESTS */
+function updateQuests(){
 
-let b=bosses[current];
+questList.innerHTML=quests.map(q=>{
 
-boss={active:true,hp:b.hp,rew:b.rew,name:b.name};
+let prog=0;
 
-alert("👹 "+b.name);
+if(q.type==="clicks") prog=clicks;
+if(q.type==="coins") prog=coins;
+if(q.type==="chest") prog=opened;
+
+if(prog>=q.need && !q.done){
+q.done=true;
+coins+=q.reward;
 }
 
-function winBoss(){
-boss.active=false;
-coins+=boss.rew;
-defeated[current]=true;
+return `
+<div class="item">
+${q.done?"✅":"🎯"} ${q.t}<br>
+${prog}/${q.need}
+</div>
+`;
 
-if(unlocked<order.length-1)unlocked++;
+}).join("");
 
-renderWorld();
+}
+
+/* SHOP */
+function buySkin(s){
+
+if(coins<prices[s])return alert("мало монет");
+
+coins-=prices[s];
+skin=s;
+
+btn.innerText=skins[s];
+
+updateUI();
+
 }
 
 /* UI */
 function updateUI(){
+
 coinsDisplay.innerText=coins;
 clicksDisplay.innerText=clicks;
-locName.innerText=loc[current].name;
 
-document.body.style.background=loc[current].bg;
 }
 
 /* INIT */
-updateUI();
+updateQuests();
+
 </script>
 
 </body>
