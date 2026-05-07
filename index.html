@@ -2,404 +2,202 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Loot RPG v5.3.1</title>
-
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<title>Loot RPG v6 NOT BORING</title>
 
 <style>
 body{
 margin:0;
 font-family:Arial;
+background:#0c0f1a;
 color:white;
-transition:0.4s;
-background:#1e3c2f;
 }
 
 .panel{
 margin:10px;
 padding:10px;
-background:rgba(0,0,0,0.4);
+background:rgba(255,255,255,0.06);
 border-radius:12px;
 }
 
-.center{text-align:center;}
-
 button{
+padding:10px;
 margin:5px;
-padding:8px 12px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 cursor:pointer;
 font-weight:bold;
 }
 
-.section{display:none;}
-.show{display:block;}
-
-.item{
-margin:5px 0;
-padding:6px;
-background:rgba(255,255,255,0.12);
-border-radius:8px;
-}
-
-.chest{
-font-size:70px;
-transition:0.2s;
-display:inline-block;
-}
-
-.popup{
-position:fixed;
-top:40%;
-left:50%;
-transform:translate(-50%,-50%);
-background:rgba(0,0,0,0.85);
-padding:15px;
+.bar{
+width:100%;
+height:12px;
+background:#333;
 border-radius:10px;
-animation:fade 1s forwards;
+overflow:hidden;
 }
 
-@keyframes fade{
-0%{opacity:0;transform:translate(-50%,-60%) scale(0.5);}
-100%{opacity:0;transform:translate(-50%,-40%) scale(1);}
+.fill{
+height:100%;
+width:100%;
+background:red;
+transition:0.2s;
 }
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="login" class="panel center">
-<h2>🎮 Введите ник</h2>
+<div class="panel">
+<h2>🎮 LOOT RPG v6</h2>
 <input id="nick" placeholder="ник">
 <button onclick="start()">Играть</button>
 </div>
 
-<!-- GAME -->
 <div id="game" style="display:none;">
 
-<div class="panel center">
-<h2>🎮 LOOT RPG v5.3.1</h2>
-
-<div>👤 <span id="name"></span></div>
-<div>💰 <span id="coins">0</span></div>
-<div>👆 <span id="clicks">0</span></div>
-<div>🌍 <span id="worldName"></span></div>
-<div>👹 <span id="bossInfo"></span></div>
-<div>🔑 <span id="keys">0</span></div>
-
-<button onclick="clicker()">👊</button>
+<div class="panel">
+👤 <span id="name"></span><br>
+💰 <span id="coins"></span> |
+⭐ Lv <span id="level"></span>
 </div>
 
-<div class="panel center">
-<button onclick="tab('quests')">🎯</button>
-<button onclick="tab('chests')">🧰</button>
-<button onclick="tab('worlds')">🌍</button>
-<button onclick="tab('shop')">🎨</button>
-<button onclick="tab('lb')">🏆</button>
+<div class="panel">
+⚔️ Сила: <span id="str"></span> |
+🛡 Защита: <span id="def"></span> |
+🍀 Удача: <span id="luck"></span>
 </div>
 
-<!-- QUESTS -->
-<div class="panel section show" id="quests">
-<h3>🎯 Квесты</h3>
-<div id="questList"></div>
+<div class="panel">
+<button onclick="safeFarm()">🟢 безопасный фарм</button>
+<button onclick="riskFarm()">🔴 риск фарм (x3)</button>
+<button onclick="openChest()">🧰 сундук</button>
+<button onclick="boss()">👹 босс</button>
 </div>
 
-<!-- CHESTS -->
-<div class="panel section" id="chests">
-<h3>🧰 Сундуки</h3>
-<div class="chest">🧰</div><br>
-<button onclick="openChest()">Открыть</button>
-</div>
-
-<!-- WORLDS -->
-<div class="panel section" id="worlds">
-<h3>🌍 Миры</h3>
-<div id="worldList"></div>
-</div>
-
-<!-- SHOP -->
-<div class="panel section" id="shop">
-<h3>🎨 Скины</h3>
-<button onclick="buySkin('fire')">🔥 Fire</button>
-<button onclick="buySkin('ice')">❄️ Ice</button>
-</div>
-
-<!-- LEADERBOARD -->
-<div class="panel section" id="lb">
-<h3>🏆 Лидерборд</h3>
-<button onclick="saveScore()">💾 Save</button>
-<button onclick="loadLB()">🔄 Load</button>
-<div id="lbList"></div>
+<div class="panel">
+<h3>👹 БОСС</h3>
+<div class="bar"><div class="fill" id="bossFill"></div></div>
+<button onclick="attackBoss()">⚔️ удар</button>
 </div>
 
 </div>
 
 <script>
 
-/* ================= FIREBASE ================= */
-
-const firebaseConfig={
-apiKey:"YOUR_KEY",
-authDomain:"YOUR_DOMAIN",
-projectId:"YOUR_ID"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
-
-/* ================= PLAYER ================= */
-
+/* PLAYER */
 let player="";
 let coins=0;
-let clicks=0;
-let keys=0;
-let opened=0;
+let level=1;
 
-/* ================= WORLDS ================= */
+let str=1;
+let def=1;
+let luck=1;
 
-let worlds=[
-{name:"🌲 Лес",hp:80,boss:"Лесной",bg:"#1e4d2b",mult:1},
-{name:"🏜 Пустыня",hp:160,boss:"Песчаный",bg:"#6b4f1d",mult:1.4},
-{name:"❄️ Лёд",hp:320,boss:"Ледяной",bg:"#2b5f7a",mult:1.8},
-{name:"🌋 Вулкан",hp:600,boss:"Вулкан",bg:"#5a1a1a",mult:2.5},
-{name:"🚀 Космос",hp:1200,boss:"Космос",bg:"#0b0b2b",mult:3.5}
-];
+/* BOSS */
+let bossHP=100;
+let bossMax=100;
 
-let worldIndex=0;
-let bossHP=0;
-let bossActive=false;
-
-/* ================= QUESTS ================= */
-
-let quests=[
-{t:"200 кликов",need:200,type:"clicks",reward:50,done:false},
-{t:"300 монет",need:300,type:"coins",reward:80,done:false},
-{t:"2 сундука",need:2,type:"chest",reward:120,done:false}
-];
-
-/* ================= START ================= */
-
+/* START */
 function start(){
 
-let n=document.getElementById("nick").value.trim();
+player=document.getElementById("nick").value||"Player";
 
-if(n.length<2){
-alert("ник минимум 2 символа");
-return;
-}
-
-player=n;
-
-localStorage.setItem("player",player);
-
-document.getElementById("login").style.display="none";
 document.getElementById("game").style.display="block";
 
-load();
-initWorld();
-updateUI();
-renderQuests();
+update();
 }
 
-/* ================= CLICK + BALANCE ================= */
+/* SAFE FARM */
+function safeFarm(){
 
-function clicker(){
+let gain=5;
 
-let base=1;
-let scale=1 + clicks/250;
-let mult=worlds[worldIndex].mult;
+coins+=gain;
+gainStats();
 
-coins += Math.floor(base*scale*mult);
-
-clicks++;
-
-/* 🔑 редкие ключи */
-let keyChance=0.01 + worldIndex*0.003;
-if(Math.random()<keyChance) keys++;
-
-/* 👹 босс */
-spawnBoss();
-
-updateUI();
-renderQuests();
-save();
+update();
 }
 
-/* ================= BOSSES ================= */
+/* RISK FARM */
+function riskFarm(){
 
-function spawnBoss(){
+let chance=Math.random();
 
-if(bossActive) return;
-
-bossActive=true;
-bossHP=worlds[worldIndex].hp;
-
-bossInfo.innerText=worlds[worldIndex].boss+" HP "+bossHP;
+if(chance < 0.6){
+coins+=15*luck;
+}else{
+coins-=10;
 }
 
-/* ================= CHEST (RARITY SYSTEM) ================= */
+gainStats();
+update();
+}
 
+/* CHEST */
 function openChest(){
 
-if(keys<=0) return;
-
-keys--;
-
 let r=Math.random();
-let reward;
 
-if(r<0.6){
-reward=20;
-}else if(r<0.9){
-reward=60;
-}else if(r<0.98){
-reward=150;
+if(r<0.5){
+coins+=10;
+}else if(r<0.8){
+coins+=30;
+str++;
+}else if(r<0.95){
+coins+=80;
+luck++;
 }else{
-reward=300;
+coins=0; // 💀 пустой/провал
 }
 
-reward*=worlds[worldIndex].mult;
-
-coins+=Math.floor(reward);
-
-opened++;
-
-popup(reward);
-
-updateUI();
-save();
+update();
 }
 
-/* ================= QUESTS ================= */
+/* BOSS */
+function attackBoss(){
 
-function renderQuests(){
+let dmg=str*2;
 
-questList.innerHTML=quests.map(q=>{
+bossHP-=dmg;
 
-let p=0;
-
-if(q.type==="clicks") p=clicks;
-if(q.type==="coins") p=coins;
-if(q.type==="chest") p=opened;
-
-if(p>=q.need && !q.done){
-q.done=true;
-coins+=q.reward;
+if(bossHP<=0){
+coins+=100;
+level++;
+bossMax+=50;
+bossHP=bossMax;
 }
 
-return `<div class="item">${q.done?"✅":"🎯"} ${q.t} ${p}/${q.need}</div>`;
-
-}).join("");
+update();
 }
 
-/* ================= WORLD ================= */
+/* STATS */
+function gainStats(){
 
-function initWorld(){
+if(coins>50){
+level++;
+coins=0;
 
-document.body.style.background=worlds[worldIndex].bg;
-
-worldName.innerText=worlds[worldIndex].name;
-bossInfo.innerText=worlds[worldIndex].boss;
+str++;
+def++;
+luck++;
+}
 }
 
-/* ================= SAVE ================= */
+/* UI */
+function update(){
 
-function save(){
-localStorage.setItem("coins",coins);
-localStorage.setItem("clicks",clicks);
-localStorage.setItem("keys",keys);
-localStorage.setItem("opened",opened);
-localStorage.setItem("worldIndex",worldIndex);
-}
+nameSpan.innerText=player;
+coinsSpan.innerText=coins;
+levelSpan.innerText=level;
 
-/* ================= LOAD ================= */
+strSpan.innerText=str;
+defSpan.innerText=def;
+luckSpan.innerText=luck;
 
-function load(){
-
-coins=+localStorage.getItem("coins")||0;
-clicks=+localStorage.getItem("clicks")||0;
-keys=+localStorage.getItem("keys")||0;
-opened=+localStorage.getItem("opened")||0;
-worldIndex=+localStorage.getItem("worldIndex")||0;
-
-player=localStorage.getItem("player")||player;
-}
-
-/* ================= UI ================= */
-
-function updateUI(){
-coinsDisplay.innerText=coins;
-clicksDisplay.innerText=clicks;
-keysDisplay.innerText=keys;
-name.innerText=player;
-}
-
-/* ================= LEADERBOARD ================= */
-
-function saveScore(){
-
-db.collection("leaderboard").doc(player).set({
-name:player,
-coins:coins,
-clicks:clicks,
-world:worldIndex,
-time:Date.now()
-});
-}
-
-function loadLB(){
-
-db.collection("leaderboard")
-.orderBy("coins","desc")
-.limit(10)
-.get()
-.then(snap=>{
-
-let html="";
-
-snap.forEach(d=>{
-let x=d.data();
-
-html+=`
-<div class="item">
-🏆 ${x.name}<br>
-💰 ${x.coins}
-</div>`;
-});
-
-lbList.innerHTML=html;
-
-});
-}
-
-/* ================= TABS ================= */
-
-function tab(id){
-
-document.querySelectorAll(".section")
-.forEach(s=>s.classList.remove("show"));
-
-document.getElementById(id).classList.add("show");
-}
-
-/* ================= POPUP ================= */
-
-function popup(a){
-
-let d=document.createElement("div");
-d.className="popup";
-d.innerText="🎁 +"+a;
-
-document.body.appendChild(d);
-
-setTimeout(()=>d.remove(),1000);
+bossFill.style.width=(bossHP/bossMax*100)+"%";
 }
 
 </script>
 
 </body>
-  </html>
+</html>
