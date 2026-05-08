@@ -1,545 +1,579 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Тетрис – Онлайн лидерборд</title>
-    
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyB6eJyhjPPDSnREaDNkZc9VquG9E2-zuG8",
-            authDomain: "click-74bb1.firebaseapp.com",
-            projectId: "click-74bb1",
-            storageBucket: "click-74bb1.firebasestorage.app",
-            messagingSenderId: "166261606223",
-            appId: "1:166261606223:web:5e7b7f0ddd09065d92e73a"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        window.FIREBASE_DB = db;
-        window.FirebaseModules = { collection, addDoc, query, orderBy, limit, onSnapshot };
-        console.log('✅ Firebase подключён!');
-    </script>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: #0a0a1a;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            min-height: 100dvh;
-            margin: 0;
-            font-family: 'Segoe UI', 'Arial', sans-serif;
-            color: white;
-            padding: 10px;
-            overflow-x: hidden;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        /* Шапка с ником */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 350px;
-            padding: 8px 12px;
-            background: #16213e;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .player-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .player-icon { font-size: 20px; }
-        .player-name { font-weight: bold; color: #f5c542; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .btn-small {
-            background: #0f3460;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 14px;
-            font-size: 13px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .btn-small:active { background: #1a4a8a; }
-        .btn-leaders {
-            background: #e94560;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(233,69,96,0.4); }
-            50% { box-shadow: 0 0 0 8px rgba(233,69,96,0); }
-        }
-
-        /* Модальные окна */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            z-index: 100;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal {
-            background: #16213e;
-            border-radius: 20px;
-            padding: 25px 20px;
-            max-width: 320px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-            border: 1px solid #0f3460;
-        }
-        .modal h3 { margin: 0 0 15px 0; color: #e94560; font-size: 22px; }
-        .modal input {
-            width: 100%;
-            padding: 14px;
-            border-radius: 12px;
-            border: 2px solid #0f3460;
-            background: #0a0a1a;
-            color: white;
-            font-size: 16px;
-            text-align: center;
-            margin-bottom: 15px;
-            outline: none;
-        }
-        .modal input:focus { border-color: #e94560; }
-        .btn-big {
-            width: 100%;
-            padding: 14px;
-            background: #e94560;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-big:active { background: #c73b54; }
-
-        /* Таблица лидеров */
-        .leaderboard-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            text-align: left;
-            max-height: 350px;
-            overflow-y: auto;
-        }
-        .leaderboard-list li {
-            padding: 10px 12px;
-            margin: 4px 0;
-            background: #0a0a1a;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-        }
-        .lb-rank { font-weight: bold; color: #f5c542; margin-right: 8px; }
-        .lb-name { flex: 1; }
-        .lb-score-big { font-weight: bold; color: #4e9af1; }
-
-        /* Игровое поле */
-        .game-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            max-width: 350px;
-            width: 100%;
-        }
-        .score-bar {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            background: #16213e;
-            padding: 10px 15px;
-            border-radius: 12px;
-            font-size: 14px;
-        }
-        .score-bar .label { color: #888; }
-        .score-bar .value { font-weight: bold; color: #f5c542; }
-
-        canvas#tetris {
-            border: 2px solid #0f3460;
-            background-color: #0f0f1e;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 300px;
-            height: auto;
-            aspect-ratio: 1/2;
-        }
-
-        .next-piece-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .next-label { font-size: 12px; color: #888; }
-        canvas#next {
-            width: 80px;
-            height: 80px;
-            background: #0f0f1e;
-            border: 1px solid #0f3460;
-            border-radius: 8px;
-        }
-
-        /* Кнопки управления */
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            grid-template-rows: auto auto auto;
-            gap: 8px;
-            width: 100%;
-            max-width: 300px;
-            margin-top: 5px;
-        }
-        .ctrl-btn {
-            background: #16213e;
-            color: white;
-            border: 2px solid #0f3460;
-            border-radius: 14px;
-            font-size: 30px;
-            padding: 14px 0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.1s;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .ctrl-btn:active { background: #0f3460; transform: scale(0.95); }
-        .empty { visibility: hidden; }
-        .btn-hard-drop {
-            background: #e94560;
-            border-color: #e94560;
-            font-size: 18px;
-            font-weight: bold;
-            grid-column: span 3;
-        }
-
-        /* Адаптация */
-        @media (max-width: 400px) {
-            canvas#tetris { max-width: 280px; }
-            .ctrl-btn { font-size: 26px; padding: 12px 0; }
-            .header { font-size: 12px; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>3D Шутер - Прототип | Three.js</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Arial', sans-serif;
+    }
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: white;
+      background: rgba(0,0,0,0.7);
+      padding: 10px 20px;
+      border-radius: 8px;
+      pointer-events: none;
+      user-select: none;
+    }
+    #crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      pointer-events: none;
+    }
+    #crosshair::before, #crosshair::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 255, 255, 0.9);
+    }
+    #crosshair::before {
+      width: 2px;
+      height: 20px;
+      left: 9px;
+      top: 0;
+    }
+    #crosshair::after {
+      width: 20px;
+      height: 2px;
+      left: 0;
+      top: 9px;
+    }
+    .health-bar {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 200px;
+      height: 20px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid white;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .health-fill {
+      width: 100%;
+      height: 100%;
+      background: #ff4444;
+      transition: width 0.3s;
+    }
+    .instructions {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.6);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      pointer-events: none;
+    }
+    .hitmarker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30px;
+      height: 30px;
+      pointer-events: none;
+      display: none;
+    }
+    .hitmarker::before, .hitmarker::after {
+      content: '';
+      position: absolute;
+      background: red;
+    }
+    .hitmarker::before {
+      width: 2px;
+      height: 30px;
+      left: 14px;
+      top: 0;
+      transform: rotate(45deg);
+    }
+    .hitmarker::after {
+      width: 30px;
+      height: 2px;
+      left: 0;
+      top: 14px;
+      transform: rotate(45deg);
+    }
+  </style>
 </head>
 <body>
+  <div id="ui">
+    <h2>Очки: <span id="score">0</span></h2>
+    <p>Врагов осталось: <span id="enemyCount">5</span></p>
+  </div>
+  <div id="crosshair"></div>
+  <div class="hitmarker" id="hitmarker"></div>
+  <div class="health-bar">
+    <div class="health-fill" id="healthFill"></div>
+  </div>
+  <div class="instructions">
+    <b>WASD</b> - движение<br>
+    <b>Мышь</b> - обзор<br>
+    <b>ЛКМ</b> - выстрел<br>
+    <b>R</b> - перезарядка<br>
+    <b>1-2</b> - смена оружия
+  </div>
 
-    <!-- Модальное окно: Ввод ника -->
-    <div class="modal-overlay" id="nicknameModal">
-        <div class="modal">
-            <h3>🎮 Как тебя зовут?</h3>
-            <input type="text" id="nicknameInput" placeholder="Введи ник" maxlength="15" autocomplete="off">
-            <button class="btn-big" id="btnSaveNickname">Играть!</button>
-        </div>
-    </div>
+  <!-- Подключаем Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+      }
+    }
+  </script>
 
-    <!-- Модальное окно: Лидерборд -->
-    <div class="modal-overlay" id="leaderboardModal">
-        <div class="modal">
-            <h3>🏆 Лучшие игроки</h3>
-            <ul class="leaderboard-list" id="leaderboardList">
-                <li style="justify-content:center;color:#888;">Загрузка...</li>
-            </ul>
-            <button class="btn-big" id="btnCloseLeaderboard" style="margin-top:15px;background:#0f3460;">Закрыть</button>
-        </div>
-    </div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-    <!-- Интерфейс игры -->
-    <div class="game-container" id="gameUI">
-        <!-- Шапка -->
-        <div class="header">
-            <div class="player-info">
-                <span class="player-icon">👤</span>
-                <span class="player-name" id="currentNickname">Игрок</span>
-            </div>
-            <div style="display:flex;gap:8px;">
-                <button class="btn-small" id="btnChangeNickname">Сменить</button>
-                <button class="btn-small btn-leaders" id="btnShowLeaders">🏆 Лидеры</button>
-            </div>
-        </div>
+    // --- ИНИЦИАЛИЗАЦИЯ СЦЕНЫ ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB); // Голубое небо
+    scene.fog = new THREE.Fog(0x87CEEB, 50, 150); // Туман для дальности
 
-        <!-- Счёт -->
-        <div class="score-bar">
-            <div><span class="label">Счёт:</span> <span class="value" id="scoreValue">0</span></div>
-            <div><span class="label">Ур:</span> <span class="value" id="levelValue">1</span></div>
-            <div><span class="label">Лин:</span> <span class="value" id="linesValue">0</span></div>
-        </div>
+    // Камера (от первого лица)
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 1.6, 5); // Рост игрока ~1.6 метра
 
-        <!-- Следующая фигура -->
-        <div class="next-piece-row">
-            <span class="next-label">Следующая:</span>
-            <canvas id="next" width="80" height="80"></canvas>
-        </div>
+    // Основной рендерер
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true; // Включаем тени
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    document.body.appendChild(renderer.domElement);
 
-        <!-- Игровое поле -->
-        <canvas id="tetris" width="300" height="600"></canvas>
+    // CSS2 рендерер для меток врагов
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.domElement.style.position = 'absolute';
+    labelRenderer.domElement.style.top = '0px';
+    labelRenderer.domElement.style.left = '0px';
+    labelRenderer.domElement.style.pointerEvents = 'none'; // Чтобы не мешал кликам
+    document.body.appendChild(labelRenderer.domElement);
 
-        <!-- Кнопки управления -->
-        <div class="controls">
-            <button class="ctrl-btn" id="btnLeft">⬅</button>
-            <button class="ctrl-btn" id="btnRotate">🔄</button>
-            <button class="ctrl-btn" id="btnRight">➡</button>
-            <div class="empty"></div>
-            <button class="ctrl-btn" id="btnDown">⬇</button>
-            <div class="empty"></div>
-            <button class="ctrl-btn btn-hard-drop" id="btnHardDrop">⏬ СБРОС</button>
-        </div>
-    </div>
+    // --- УПРАВЛЕНИЕ ---
+    const controls = new PointerLockControls(camera, document.body);
+    
+    // Блокировка курсора по клику
+    renderer.domElement.addEventListener('click', () => {
+      controls.lock();
+    });
 
-    <script>
-        // ========== НИКНЕЙМ ==========
-        let playerNickname = '';
-        const nicknameModal = document.getElementById('nicknameModal');
-        const nicknameInput = document.getElementById('nicknameInput');
-        const currentNicknameSpan = document.getElementById('currentNickname');
-        const storageNameKey = 'tetris_nickname';
+    controls.addEventListener('lock', () => {
+      document.getElementById('ui').style.display = 'block';
+      document.getElementById('crosshair').style.display = 'block';
+      document.querySelector('.instructions').style.display = 'block';
+    });
 
-        function getSavedNickname() {
-            return localStorage.getItem(storageNameKey) || '';
+    controls.addEventListener('unlock', () => {
+      document.getElementById('ui').style.display = 'none';
+      document.getElementById('crosshair').style.display = 'none';
+      document.querySelector('.instructions').style.display = 'none';
+    });
+
+    // Обработка движения
+    const keyState = {
+      w: false, a: false, s: false, d: false,
+      shift: false, space: false
+    };
+    
+    const moveSpeed = 8.0;
+    const playerVelocity = new THREE.Vector3();
+    const playerDirection = new THREE.Vector3();
+
+    document.addEventListener('keydown', (e) => {
+      switch(e.code) {
+        case 'KeyW': keyState.w = true; break;
+        case 'KeyA': keyState.a = true; break;
+        case 'KeyS': keyState.s = true; break;
+        case 'KeyD': keyState.d = true; break;
+        case 'ShiftLeft': keyState.shift = true; break;
+        case 'Space': keyState.space = true; break;
+        case 'KeyR': reload(); break;
+        case 'Digit1': switchWeapon(0); break;
+        case 'Digit2': switchWeapon(1); break;
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      switch(e.code) {
+        case 'KeyW': keyState.w = false; break;
+        case 'KeyA': keyState.a = false; break;
+        case 'KeyS': keyState.s = false; break;
+        case 'KeyD': keyState.d = false; break;
+        case 'ShiftLeft': keyState.shift = false; break;
+        case 'Space': keyState.space = false; break;
+      }
+    });
+
+    // --- ОРУЖИЕ И СТРЕЛЬБА ---
+    const weapons = [
+      { name: 'Пистолет', damage: 25, fireRate: 300, ammo: 15, maxAmmo: 15, reloadTime: 1500 },
+      { name: 'Автомат', damage: 35, fireRate: 100, ammo: 30, maxAmmo: 30, reloadTime: 2500 }
+    ];
+    let currentWeaponIndex = 0;
+    let currentWeapon = weapons[currentWeaponIndex];
+    let canShoot = true;
+    let isReloading = false;
+    let playerHealth = 100;
+    let score = 0;
+    
+    // Звук выстрела (создаем через Web Audio API)
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    function playShootSound() {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    }
+
+    function playHitSound() {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.1);
+    }
+
+    function switchWeapon(index) {
+      if (isReloading || index === currentWeaponIndex) return;
+      currentWeaponIndex = index;
+      currentWeapon = weapons[currentWeaponIndex];
+      document.getElementById('ui').innerHTML = `
+        <h2>Очки: ${score}</h2>
+        <p>Оружие: ${currentWeapon.name} | Патроны: ${currentWeapon.ammo}/${currentWeapon.maxAmmo}</p>
+        <p>Врагов осталось: <span id="enemyCount">${enemies.length}</span></p>
+      `;
+    }
+
+    function reload() {
+      if (isReloading || currentWeapon.ammo === currentWeapon.maxAmmo) return;
+      isReloading = true;
+      setTimeout(() => {
+        currentWeapon.ammo = currentWeapon.maxAmmo;
+        isReloading = false;
+        updateUI();
+      }, currentWeapon.reloadTime);
+    }
+
+    function shoot() {
+      if (!canShoot || isReloading || currentWeapon.ammo <= 0) return;
+      
+      canShoot = false;
+      currentWeapon.ammo--;
+      playShootSound();
+      updateUI();
+      
+      // Создаем луч из центра экрана
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      
+      const intersects = raycaster.intersectObjects(enemies);
+      
+      if (intersects.length > 0) {
+        const enemy = intersects[0].object;
+        enemy.userData.health -= currentWeapon.damage;
+        playHitSound();
+        
+        // Показываем хитмаркер
+        const hitmarker = document.getElementById('hitmarker');
+        hitmarker.style.display = 'block';
+        setTimeout(() => hitmarker.style.display = 'none', 150);
+        
+        if (enemy.userData.health <= 0) {
+          // Уничтожаем врага
+          scene.remove(enemy);
+          const index = enemies.indexOf(enemy);
+          if (index > -1) enemies.splice(index, 1);
+          
+          // Удаляем метку
+          if (enemy.userData.label) {
+            scene.remove(enemy.userData.label);
+          }
+          
+          score += 100;
+          updateUI();
+          
+          // Проверка победы
+          if (enemies.length === 0) {
+            setTimeout(() => {
+              alert('Победа! Все враги уничтожены. Очки: ' + score);
+              location.reload();
+            }, 500);
+          }
         }
-        function saveNickname(name) {
-            localStorage.setItem(storageNameKey, name);
-            playerNickname = name;
-            currentNicknameSpan.textContent = name;
-        }
+      }
+      
+      setTimeout(() => {
+        canShoot = true;
+      }, currentWeapon.fireRate);
+    }
 
-        function showNicknameModal() {
-            nicknameModal.classList.add('active');
-            nicknameInput.value = getSavedNickname();
-            nicknameInput.focus();
-        }
-        function hideNicknameModal() {
-            nicknameModal.classList.remove('active');
-        }
+    // Обработка клика мыши
+    document.addEventListener('mousedown', (e) => {
+      if (e.button === 0 && controls.isLocked) { // Левая кнопка мыши
+        shoot();
+      }
+    });
 
-        // Если ник уже есть - не показываем модалку при загрузке
-        window.addEventListener('load', () => {
-            const saved = getSavedNickname();
-            if (saved) {
-                playerNickname = saved;
-                currentNicknameSpan.textContent = saved;
-                if (window.FIREBASE_DB) startGame();
-            } else {
-                showNicknameModal();
+    function updateUI() {
+      document.getElementById('ui').innerHTML = `
+        <h2>Очки: ${score}</h2>
+        <p>Оружие: ${currentWeapon.name} | Патроны: ${currentWeapon.ammo}/${currentWeapon.maxAmmo} ${isReloading ? '(перезарядка...)' : ''}</p>
+        <p>Врагов осталось: <span id="enemyCount">${enemies.length}</span></p>
+      `;
+      document.getElementById('healthFill').style.width = playerHealth + '%';
+    }
+
+    // --- СОЗДАНИЕ УРОВНЯ ---
+    
+    // Освещение
+    const ambientLight = new THREE.AmbientLight(0x404060);
+    scene.add(ambientLight);
+    
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    sunLight.position.set(50, 100, 50);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.width = 1024;
+    sunLight.shadow.mapSize.height = 1024;
+    sunLight.shadow.camera.near = 0.5;
+    sunLight.shadow.camera.far = 200;
+    sunLight.shadow.camera.left = -50;
+    sunLight.shadow.camera.right = 50;
+    sunLight.shadow.camera.top = 50;
+    sunLight.shadow.camera.bottom = -50;
+    scene.add(sunLight);
+
+    // Пол
+    const floorGeometry = new THREE.PlaneGeometry(100, 100);
+    const floorMaterial = new THREE.MeshStandardMaterial({ 
+      color: 0x3a5f3a, 
+      roughness: 0.8,
+      side: THREE.DoubleSide
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.01;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Разметка пола (сетка)
+    const gridHelper = new THREE.GridHelper(100, 40, 0x000000, 0x000000);
+    gridHelper.material.opacity = 0.1;
+    gridHelper.material.transparent = true;
+    scene.add(gridHelper);
+
+    // Стены и препятствия
+    function createWall(x, y, z, w, h, d, color = 0x808080) {
+      const geometry = new THREE.BoxGeometry(w, h, d);
+      const material = new THREE.MeshStandardMaterial({ color, roughness: 0.7 });
+      const wall = new THREE.Mesh(geometry, material);
+      wall.position.set(x, y, z);
+      wall.castShadow = true;
+      wall.receiveShadow = true;
+      scene.add(wall);
+      return wall;
+    }
+
+    // Внешние стены
+    createWall(0, 2.5, -25, 50, 5, 1, 0x8B7355);
+    createWall(0, 2.5, 25, 50, 5, 1, 0x8B7355);
+    createWall(-25, 2.5, 0, 1, 5, 50, 0x8B7355);
+    createWall(25, 2.5, 0, 1, 5, 50, 0x8B7355);
+
+    // Внутренние препятствия (ящики, стены)
+    const obstacles = [
+      { pos: [-10, 1, -10], size: [4, 2, 4], color: 0xCD853F },
+      { pos: [10, 1, -10], size: [4, 2, 4], color: 0xCD853F },
+      { pos: [-10, 1, 10], size: [4, 2, 4], color: 0xCD853F },
+      { pos: [10, 1, 10], size: [4, 2, 4], color: 0xCD853F },
+      { pos: [0, 1.5, 0], size: [6, 3, 2], color: 0xA0522D },
+      { pos: [-15, 1.5, 0], size: [2, 3, 6], color: 0x696969 },
+      { pos: [15, 1.5, 0], size: [2, 3, 6], color: 0x696969 },
+      { pos: [0, 1, -15], size: [8, 2, 2], color: 0x808080 },
+    ];
+
+    obstacles.forEach(obs => {
+      createWall(obs.pos[0], obs.pos[1], obs.pos[2], obs.size[0], obs.size[1], obs.size[2], obs.color);
+    });
+
+    // --- ВРАГИ ---
+    const enemies = [];
+    
+    function createEnemy(x, z) {
+      const geometry = new THREE.BoxGeometry(1, 2, 1);
+      const material = new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.4 });
+      const enemy = new THREE.Mesh(geometry, material);
+      enemy.position.set(x, 1, z);
+      enemy.castShadow = true;
+      enemy.receiveShadow = true;
+      enemy.userData = {
+        health: 100,
+        speed: 1.5 + Math.random() * 2,
+        detectionRange: 15,
+        attackRange: 2,
+        attackDamage: 10,
+        lastAttackTime: 0
+      };
+      
+      // Метка здоровья над врагом
+      const healthDiv = document.createElement('div');
+      healthDiv.textContent = '100%';
+      healthDiv.style.color = 'white';
+      healthDiv.style.fontWeight = 'bold';
+      healthDiv.style.textShadow = '1px 1px 2px black';
+      const label = new CSS2DObject(healthDiv);
+      label.position.set(0, 2.5, 0);
+      enemy.add(label);
+      enemy.userData.label = label;
+      
+      scene.add(enemy);
+      enemies.push(enemy);
+      return enemy;
+    }
+
+    // Расставляем врагов
+    createEnemy(-12, -12);
+    createEnemy(12, -12);
+    createEnemy(-12, 12);
+    createEnemy(12, 12);
+    createEnemy(0, -18);
+    
+    updateUI();
+
+    // --- ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ ВРАГОВ ---
+    function updateEnemies(deltaTime) {
+      const playerPos = camera.position;
+      
+      enemies.forEach(enemy => {
+        const enemyPos = enemy.position;
+        const distanceToPlayer = enemyPos.distanceTo(playerPos);
+        
+        // Обновляем метку здоровья
+        const healthPercent = Math.max(0, enemy.userData.health);
+        enemy.userData.label.element.textContent = Math.ceil(healthPercent) + '%';
+        
+        if (distanceToPlayer < enemy.userData.detectionRange) {
+          // Враг видит игрока и движется к нему
+          const direction = new THREE.Vector3()
+            .subVectors(playerPos, enemyPos)
+            .normalize();
+          
+          // Смотрим на игрока
+          enemy.lookAt(playerPos.x, enemyPos.y, playerPos.z);
+          
+          if (distanceToPlayer > enemy.userData.attackRange) {
+            // Движение к игроку
+            const moveAmount = enemy.userData.speed * deltaTime;
+            enemy.position.x += direction.x * moveAmount;
+            enemy.position.z += direction.z * moveAmount;
+          } else {
+            // Атака игрока
+            const now = Date.now();
+            if (now - enemy.userData.lastAttackTime > 1000) {
+              enemy.userData.lastAttackTime = now;
+              playerHealth -= enemy.userData.attackDamage;
+              updateUI();
+              
+              // Эффект получения урона (красная вспышка)
+              document.body.style.backgroundColor = 'rgba(255,0,0,0.3)';
+              setTimeout(() => document.body.style.backgroundColor = '', 100);
+              
+              if (playerHealth <= 0) {
+                alert('Вы погибли! Игра окончена.');
+                location.reload();
+              }
             }
-        });
-
-        document.getElementById('btnSaveNickname').addEventListener('click', () => {
-            let name = nicknameInput.value.trim();
-            if (!name) name = 'Игрок_' + Math.floor(Math.random() * 1000);
-            saveNickname(name);
-            hideNicknameModal();
-            if (!window.FIREBASE_DB) {
-                alert('Firebase не загружен. Обнови страницу.');
-                return;
-            }
-            startGame();
-        });
-
-        document.getElementById('btnChangeNickname').addEventListener('click', () => {
-            showNicknameModal();
-        });
-
-        // ========== МОДАЛКА ЛИДЕРБОРДА ==========
-        const leaderboardModal = document.getElementById('leaderboardModal');
-        const leaderboardListEl = document.getElementById('leaderboardList');
-
-        document.getElementById('btnShowLeaders').addEventListener('click', () => {
-            leaderboardModal.classList.add('active');
-        });
-        document.getElementById('btnCloseLeaderboard').addEventListener('click', () => {
-            leaderboardModal.classList.remove('active');
-        });
-
-        leaderboardModal.addEventListener('click', (e) => {
-            if (e.target === leaderboardModal) leaderboardModal.classList.remove('active');
-        });
-        nicknameModal.addEventListener('click', (e) => {
-            // Не даём закрыть модалку ника кликом мимо (пока ник не введён)
-        });
-
-        // ========== FIREBASE ==========
-        const { collection, addDoc, query, orderBy, limit, onSnapshot } = window.FirebaseModules || {};
-        let db = null;
-
-        function initFirebase() {
-            db = window.FIREBASE_DB;
-            initLeaderboard();
+          }
         }
+      });
+    }
 
-        function initLeaderboard() {
-            if (!db) return;
-            const q = query(collection(db, 'leaderboard'), orderBy('score', 'desc'), limit(10));
-            onSnapshot(q, (snapshot) => {
-                const entries = [];
-                snapshot.forEach(doc => entries.push({ id: doc.id, ...doc.data() }));
-                renderLeaderboardInModal(entries);
-            }, (error) => {
-                leaderboardListEl.innerHTML = '<li style="justify-content:center;color:orange;">Ошибка загрузки</li>';
-            });
+    // --- ИГРОВОЙ ЦИКЛ ---
+    let clock = new THREE.Clock();
+
+    function animate() {
+      const deltaTime = Math.min(clock.getDelta(), 0.1); // Ограничиваем дельту
+      
+      if (controls.isLocked) {
+        // Обработка движения
+        playerVelocity.set(0, 0, 0);
+        playerDirection.set(0, 0, 0);
+        
+        const speed = keyState.shift ? moveSpeed * 1.5 : moveSpeed;
+        
+        if (keyState.w) playerDirection.z -= 1;
+        if (keyState.s) playerDirection.z += 1;
+        if (keyState.a) playerDirection.x -= 1;
+        if (keyState.d) playerDirection.x += 1;
+        
+        if (playerDirection.length() > 0) {
+          playerDirection.normalize();
+          playerVelocity.x = playerDirection.x * speed * deltaTime;
+          playerVelocity.z = playerDirection.z * speed * deltaTime;
+          
+          controls.moveRight(playerVelocity.x);
+          controls.moveForward(-playerVelocity.z);
         }
-
-        function renderLeaderboardInModal(entries) {
-            leaderboardListEl.innerHTML = '';
-            if (entries.length === 0) {
-                leaderboardListEl.innerHTML = '<li style="justify-content:center;">Пока пусто. Сыграй! 🎮</li>';
-                return;
-            }
-            entries.forEach((entry, index) => {
-                const li = document.createElement('li');
-                const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-                li.innerHTML = `
-                    <span class="lb-rank">${medal} ${index + 1}.</span>
-                    <span class="lb-name">${entry.name}</span>
-                    <span class="lb-score-big">${entry.score.toLocaleString()}</span>
-                `;
-                leaderboardListEl.appendChild(li);
-            });
+        
+        // Простая система "прыжка" (Space)
+        if (keyState.space && camera.position.y <= 1.6) {
+          // Можно добавить физику прыжка
         }
+        
+        // Обновление врагов
+        updateEnemies(deltaTime);
+      }
+      
+      // Рендеринг
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+      
+      requestAnimationFrame(animate);
+    }
 
-        async function addScoreToLeaderboard(name, score, level, lines) {
-            if (!db) return;
-            try {
-                await addDoc(collection(db, 'leaderboard'), {
-                    name: name || 'Аноним',
-                    score, level, lines,
-                    date: new Date().toLocaleDateString('ru-RU'),
-                    timestamp: Date.now()
-                });
-            } catch (e) {
-                console.error('Ошибка сохранения:', e);
-            }
-        }
+    // Обработка изменения размера окна
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-        // ========== ИГРА ==========
-        const COLS = 10, ROWS = 20, BLOCK_SIZE = 30;
-        const COLORS = ['#0f0f1e','#e94560','#f5c542','#4e9af1','#6f42c1','#2ecc71','#e67e22','#1abc9c'];
-        const TETROMINOS = [
-            [[1,1,1,1]], [[1,1],[1,1]], [[0,1,0],[1,1,1]],
-            [[0,1,1],[1,1,0]], [[1,1,0],[0,1,1]], [[1,0,0],[1,1,1]], [[0,0,1],[1,1,1]]
-        ];
-
-        let board, currentPiece, nextPiece, gameOver = false;
-        let score = 0, linesCleared = 0, level = 1;
-        let dropInterval = 500, lastDropTime = 0;
-        let leaderboardSaved = false;
-        let gameStarted = false;
-
-        const canvas = document.getElementById('tetris');
-        const ctx = canvas.getContext('2d');
-        const nextCanvas = document.getElementById('next');
-        const nextCtx = nextCanvas.getContext('2d');
-        const scoreSpan = document.getElementById('scoreValue');
-        const levelSpan = document.getElementById('levelValue');
-        const linesSpan = document.getElementById('linesValue');
-
-        function init() {
-            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
-            gameOver = false;
-            leaderboardSaved = false;
-            score = 0; linesCleared = 0; level = 1;
-            dropInterval = 500; lastDropTime = 0;
-            updateStats();
-            nextPiece = randomPiece();
-            spawnPiece();
-        }
-
-        function randomPiece() {
-            const idx = Math.floor(Math.random() * TETROMINOS.length);
-            return { matrix: TETROMINOS[idx].map(r => [...r]), colorIndex: idx + 1 };
-        }
-
-        function spawnPiece() {
-            if (!nextPiece) nextPiece = randomPiece();
-            currentPiece = { matrix: nextPiece.matrix.map(r => [...r]), colorIndex: nextPiece.colorIndex, x: Math.floor((COLS - nextPiece.matrix[0].length) / 2), y: 0 };
-            nextPiece = randomPiece();
-            if (!isValidPosition(currentPiece.matrix, currentPiece.x, currentPiece.y)) {
-                gameOver = true;
-                if (!leaderboardSaved) {
-                    leaderboardSaved = true;
-                    setTimeout(() => {
-                        addScoreToLeaderboard(playerNickname, score, level, linesCleared);
-                        alert(`Игра окончена! Твой счёт: ${score}\nРезультат сохранён в лидерборде.`);
-                    }, 200);
-                }
-            }
-        }
-
-        function isValidPosition(matrix, px, py) {
-            for (let r = 0; r < matrix.length; r++)
-                for (let c = 0; c < matrix[r].length; c++)
-                    if (matrix[r][c] !== 0) {
-                        const bx = px + c, by = py + r;
-                        if (bx < 0 || bx >= COLS || by >= ROWS || (by >= 0 && board[by][bx] !== 0)) return false;
-                    }
-            return true;
-        }
-
-        function lockPiece() {
-            const { matrix, x, y, colorIndex } = currentPiece;
-            for (let r = 0; r < matrix.length; r++)
-                for (let c = 0; c < matrix[r].length; c++)
-                    if (matrix[r][c] !== 0) {
-                        const by = y + r, bx = x + c;
-                        if (by >= 0 && by < ROWS && bx >= 0 && bx < COLS) board[by][bx] = colorIndex;
-                    }
-            clearFullRows();
-            spawnPiece();
-        }
-
-        function clearFullRows() {
-            let removed = 0;
-            for (let r = ROWS - 1; r >= 0; r--) {
-                if (board[r].every(cell => cell !== 0)) {
-                    board.splice(r, 1); board.unshift(new Array(COLS).fill(0));
-                    r++; removed++;
-                }
-            }
-            if (removed > 0) {
-                linesCleared += removed;
-                score += [0,100,300,500,800][removed] * level;
-                const nl = Math.floor(score/1000)+1;
-                if (nl > level) { level = nl; dropInterval = Math.max(50, 500 - (level-1)*50); }
-                updateStats();
-            }
-        }
-
-        function movePiece(dx, dy) {
-            if (!currentPiece || gameOver) return false;
-            const nx = currentPiece.x + dx, ny = currentPiece.y + dy;
-            if (isValidPosition(currentPiece.matrix, nx, ny)) { currentPiece.x = nx; currentPiece.y = ny; return true; }
-            if (dy === 1) lockPiece();
-            return false;
-        }
-
-        function rotatePiece() {
-            if (!currentPiece || gameOver) return;
-            const rot = currentPiece.matrix[0].map((_, i) => currentPiece.matrix.map(r => r[i]).r
+    // Запуск игры
+    animate();
+    
+    console.log('Игра готова! Кликните для захвата курсора.');
+  </script>
+</body>
+    </html>
