@@ -1,579 +1,473 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>3D Шутер - Прототип | Three.js</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: 'Arial', sans-serif;
-    }
-    #ui {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      color: white;
-      background: rgba(0,0,0,0.7);
-      padding: 10px 20px;
-      border-radius: 8px;
-      pointer-events: none;
-      user-select: none;
-    }
-    #crosshair {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 20px;
-      height: 20px;
-      pointer-events: none;
-    }
-    #crosshair::before, #crosshair::after {
-      content: '';
-      position: absolute;
-      background: rgba(255, 255, 255, 0.9);
-    }
-    #crosshair::before {
-      width: 2px;
-      height: 20px;
-      left: 9px;
-      top: 0;
-    }
-    #crosshair::after {
-      width: 20px;
-      height: 2px;
-      left: 0;
-      top: 9px;
-    }
-    .health-bar {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      width: 200px;
-      height: 20px;
-      background: rgba(0,0,0,0.5);
-      border: 2px solid white;
-      border-radius: 5px;
-      overflow: hidden;
-    }
-    .health-fill {
-      width: 100%;
-      height: 100%;
-      background: #ff4444;
-      transition: width 0.3s;
-    }
-    .instructions {
-      position: absolute;
-      bottom: 20px;
-      right: 20px;
-      color: rgba(255,255,255,0.7);
-      background: rgba(0,0,0,0.6);
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      pointer-events: none;
-    }
-    .hitmarker {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 30px;
-      height: 30px;
-      pointer-events: none;
-      display: none;
-    }
-    .hitmarker::before, .hitmarker::after {
-      content: '';
-      position: absolute;
-      background: red;
-    }
-    .hitmarker::before {
-      width: 2px;
-      height: 30px;
-      left: 14px;
-      top: 0;
-      transform: rotate(45deg);
-    }
-    .hitmarker::after {
-      width: 30px;
-      height: 2px;
-      left: 0;
-      top: 14px;
-      transform: rotate(45deg);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>✨ NEXUS — ритм-игра (телефон/ПК) ✨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #0a0f1e 0%, #03050a 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', 'Orbitron', monospace;
+            overflow: hidden;
+            padding: 12px;
+        }
+
+        .game-wrapper {
+            position: relative;
+            border-radius: 32px;
+            padding: 8px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 40px rgba(0,255,255,0.2);
+            width: min(95vw, 95vh);
+            max-width: 800px;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 28px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            cursor: pointer;
+            width: 100%;
+            height: auto;
+            background-color: #03050c;
+        }
+
+        .hud {
+            position: absolute;
+            top: 16px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 16px;
+            pointer-events: none;
+            z-index: 10;
+            text-shadow: 0 0 8px cyan;
+        }
+
+        .score-card, .miss-card {
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 8px 18px;
+            border-radius: 60px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            font-family: monospace;
+            letter-spacing: 2px;
+            color: #0ff;
+            box-shadow: 0 0 12px rgba(0,255,255,0.6);
+            border: 1px solid cyan;
+        }
+
+        .miss-card {
+            color: #ff66cc;
+            border-color: #ff66cc;
+            box-shadow: 0 0 10px #ff66cc;
+        }
+
+        .restart-btn {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            border: 2px solid cyan;
+            color: cyan;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 48px;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            transition: 0.2s;
+            font-family: monospace;
+            z-index: 20;
+            pointer-events: auto;
+            touch-action: manipulation;
+            white-space: nowrap;
+        }
+
+        .restart-btn:active {
+            transform: translateX(-50%) scale(0.96);
+            background: cyan;
+            color: black;
+        }
+
+        @media (max-width: 600px) {
+            .score-card, .miss-card {
+                padding: 5px 14px;
+                font-size: 1rem;
+            }
+            .restart-btn {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+                bottom: 12px;
+            }
+            .hud {
+                top: 8px;
+                padding: 0 12px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div id="ui">
-    <h2>Очки: <span id="score">0</span></h2>
-    <p>Врагов осталось: <span id="enemyCount">5</span></p>
-  </div>
-  <div id="crosshair"></div>
-  <div class="hitmarker" id="hitmarker"></div>
-  <div class="health-bar">
-    <div class="health-fill" id="healthFill"></div>
-  </div>
-  <div class="instructions">
-    <b>WASD</b> - движение<br>
-    <b>Мышь</b> - обзор<br>
-    <b>ЛКМ</b> - выстрел<br>
-    <b>R</b> - перезарядка<br>
-    <b>1-2</b> - смена оружия
-  </div>
+<div class="game-wrapper">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div class="hud">
+        <div class="score-card">✨ <span id="scoreValue">0</span></div>
+        <div class="miss-card">💔 <span id="missValue">0</span> / 3</div>
+    </div>
+    <button class="restart-btn" id="restartButton">⟳ NEXUS</button>
+</div>
 
-  <!-- Подключаем Three.js -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-        "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
-      }
-    }
-  </script>
-
-  <script type="module">
-    import * as THREE from 'three';
-    import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
-    import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-
-    // --- ИНИЦИАЛИЗАЦИЯ СЦЕНЫ ---
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x87CEEB); // Голубое небо
-    scene.fog = new THREE.Fog(0x87CEEB, 50, 150); // Туман для дальности
-
-    // Камера (от первого лица)
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 1.6, 5); // Рост игрока ~1.6 метра
-
-    // Основной рендерер
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true; // Включаем тени
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.body.appendChild(renderer.domElement);
-
-    // CSS2 рендерер для меток врагов
-    const labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize(window.innerWidth, window.innerHeight);
-    labelRenderer.domElement.style.position = 'absolute';
-    labelRenderer.domElement.style.top = '0px';
-    labelRenderer.domElement.style.left = '0px';
-    labelRenderer.domElement.style.pointerEvents = 'none'; // Чтобы не мешал кликам
-    document.body.appendChild(labelRenderer.domElement);
-
-    // --- УПРАВЛЕНИЕ ---
-    const controls = new PointerLockControls(camera, document.body);
-    
-    // Блокировка курсора по клику
-    renderer.domElement.addEventListener('click', () => {
-      controls.lock();
-    });
-
-    controls.addEventListener('lock', () => {
-      document.getElementById('ui').style.display = 'block';
-      document.getElementById('crosshair').style.display = 'block';
-      document.querySelector('.instructions').style.display = 'block';
-    });
-
-    controls.addEventListener('unlock', () => {
-      document.getElementById('ui').style.display = 'none';
-      document.getElementById('crosshair').style.display = 'none';
-      document.querySelector('.instructions').style.display = 'none';
-    });
-
-    // Обработка движения
-    const keyState = {
-      w: false, a: false, s: false, d: false,
-      shift: false, space: false
-    };
-    
-    const moveSpeed = 8.0;
-    const playerVelocity = new THREE.Vector3();
-    const playerDirection = new THREE.Vector3();
-
-    document.addEventListener('keydown', (e) => {
-      switch(e.code) {
-        case 'KeyW': keyState.w = true; break;
-        case 'KeyA': keyState.a = true; break;
-        case 'KeyS': keyState.s = true; break;
-        case 'KeyD': keyState.d = true; break;
-        case 'ShiftLeft': keyState.shift = true; break;
-        case 'Space': keyState.space = true; break;
-        case 'KeyR': reload(); break;
-        case 'Digit1': switchWeapon(0); break;
-        case 'Digit2': switchWeapon(1); break;
-      }
-    });
-
-    document.addEventListener('keyup', (e) => {
-      switch(e.code) {
-        case 'KeyW': keyState.w = false; break;
-        case 'KeyA': keyState.a = false; break;
-        case 'KeyS': keyState.s = false; break;
-        case 'KeyD': keyState.d = false; break;
-        case 'ShiftLeft': keyState.shift = false; break;
-        case 'Space': keyState.space = false; break;
-      }
-    });
-
-    // --- ОРУЖИЕ И СТРЕЛЬБА ---
-    const weapons = [
-      { name: 'Пистолет', damage: 25, fireRate: 300, ammo: 15, maxAmmo: 15, reloadTime: 1500 },
-      { name: 'Автомат', damage: 35, fireRate: 100, ammo: 30, maxAmmo: 30, reloadTime: 2500 }
-    ];
-    let currentWeaponIndex = 0;
-    let currentWeapon = weapons[currentWeaponIndex];
-    let canShoot = true;
-    let isReloading = false;
-    let playerHealth = 100;
-    let score = 0;
-    
-    // Звук выстрела (создаем через Web Audio API)
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    function playShootSound() {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.type = 'square';
-      oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.1);
-    }
-
-    function playHitSound() {
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContext.destination);
-      
-      oscillator.type = 'sine';
-      oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
-      gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-      
-      oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.1);
-    }
-
-    function switchWeapon(index) {
-      if (isReloading || index === currentWeaponIndex) return;
-      currentWeaponIndex = index;
-      currentWeapon = weapons[currentWeaponIndex];
-      document.getElementById('ui').innerHTML = `
-        <h2>Очки: ${score}</h2>
-        <p>Оружие: ${currentWeapon.name} | Патроны: ${currentWeapon.ammo}/${currentWeapon.maxAmmo}</p>
-        <p>Врагов осталось: <span id="enemyCount">${enemies.length}</span></p>
-      `;
-    }
-
-    function reload() {
-      if (isReloading || currentWeapon.ammo === currentWeapon.maxAmmo) return;
-      isReloading = true;
-      setTimeout(() => {
-        currentWeapon.ammo = currentWeapon.maxAmmo;
-        isReloading = false;
-        updateUI();
-      }, currentWeapon.reloadTime);
-    }
-
-    function shoot() {
-      if (!canShoot || isReloading || currentWeapon.ammo <= 0) return;
-      
-      canShoot = false;
-      currentWeapon.ammo--;
-      playShootSound();
-      updateUI();
-      
-      // Создаем луч из центра экрана
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-      
-      const intersects = raycaster.intersectObjects(enemies);
-      
-      if (intersects.length > 0) {
-        const enemy = intersects[0].object;
-        enemy.userData.health -= currentWeapon.damage;
-        playHitSound();
+<script>
+    (function(){
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
         
-        // Показываем хитмаркер
-        const hitmarker = document.getElementById('hitmarker');
-        hitmarker.style.display = 'block';
-        setTimeout(() => hitmarker.style.display = 'none', 150);
-        
-        if (enemy.userData.health <= 0) {
-          // Уничтожаем врага
-          scene.remove(enemy);
-          const index = enemies.indexOf(enemy);
-          if (index > -1) enemies.splice(index, 1);
-          
-          // Удаляем метку
-          if (enemy.userData.label) {
-            scene.remove(enemy.userData.label);
-          }
-          
-          score += 100;
-          updateUI();
-          
-          // Проверка победы
-          if (enemies.length === 0) {
-            setTimeout(() => {
-              alert('Победа! Все враги уничтожены. Очки: ' + score);
-              location.reload();
-            }, 500);
-          }
+        // адаптация под экран (сохраняем пропорции 800x600)
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const maxW = Math.min(window.innerWidth - 32, 800);
+            const maxH = Math.min(window.innerHeight - 120, 600);
+            const scale = Math.min(maxW / 800, maxH / 600);
+            const displayW = 800 * scale;
+            const displayH = 600 * scale;
+            canvas.style.width = `${displayW}px`;
+            canvas.style.height = `${displayH}px`;
         }
-      }
-      
-      setTimeout(() => {
-        canShoot = true;
-      }, currentWeapon.fireRate);
-    }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-    // Обработка клика мыши
-    document.addEventListener('mousedown', (e) => {
-      if (e.button === 0 && controls.isLocked) { // Левая кнопка мыши
-        shoot();
-      }
-    });
-
-    function updateUI() {
-      document.getElementById('ui').innerHTML = `
-        <h2>Очки: ${score}</h2>
-        <p>Оружие: ${currentWeapon.name} | Патроны: ${currentWeapon.ammo}/${currentWeapon.maxAmmo} ${isReloading ? '(перезарядка...)' : ''}</p>
-        <p>Врагов осталось: <span id="enemyCount">${enemies.length}</span></p>
-      `;
-      document.getElementById('healthFill').style.width = playerHealth + '%';
-    }
-
-    // --- СОЗДАНИЕ УРОВНЯ ---
-    
-    // Освещение
-    const ambientLight = new THREE.AmbientLight(0x404060);
-    scene.add(ambientLight);
-    
-    const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    sunLight.position.set(50, 100, 50);
-    sunLight.castShadow = true;
-    sunLight.shadow.mapSize.width = 1024;
-    sunLight.shadow.mapSize.height = 1024;
-    sunLight.shadow.camera.near = 0.5;
-    sunLight.shadow.camera.far = 200;
-    sunLight.shadow.camera.left = -50;
-    sunLight.shadow.camera.right = 50;
-    sunLight.shadow.camera.top = 50;
-    sunLight.shadow.camera.bottom = -50;
-    scene.add(sunLight);
-
-    // Пол
-    const floorGeometry = new THREE.PlaneGeometry(100, 100);
-    const floorMaterial = new THREE.MeshStandardMaterial({ 
-      color: 0x3a5f3a, 
-      roughness: 0.8,
-      side: THREE.DoubleSide
-    });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.01;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Разметка пола (сетка)
-    const gridHelper = new THREE.GridHelper(100, 40, 0x000000, 0x000000);
-    gridHelper.material.opacity = 0.1;
-    gridHelper.material.transparent = true;
-    scene.add(gridHelper);
-
-    // Стены и препятствия
-    function createWall(x, y, z, w, h, d, color = 0x808080) {
-      const geometry = new THREE.BoxGeometry(w, h, d);
-      const material = new THREE.MeshStandardMaterial({ color, roughness: 0.7 });
-      const wall = new THREE.Mesh(geometry, material);
-      wall.position.set(x, y, z);
-      wall.castShadow = true;
-      wall.receiveShadow = true;
-      scene.add(wall);
-      return wall;
-    }
-
-    // Внешние стены
-    createWall(0, 2.5, -25, 50, 5, 1, 0x8B7355);
-    createWall(0, 2.5, 25, 50, 5, 1, 0x8B7355);
-    createWall(-25, 2.5, 0, 1, 5, 50, 0x8B7355);
-    createWall(25, 2.5, 0, 1, 5, 50, 0x8B7355);
-
-    // Внутренние препятствия (ящики, стены)
-    const obstacles = [
-      { pos: [-10, 1, -10], size: [4, 2, 4], color: 0xCD853F },
-      { pos: [10, 1, -10], size: [4, 2, 4], color: 0xCD853F },
-      { pos: [-10, 1, 10], size: [4, 2, 4], color: 0xCD853F },
-      { pos: [10, 1, 10], size: [4, 2, 4], color: 0xCD853F },
-      { pos: [0, 1.5, 0], size: [6, 3, 2], color: 0xA0522D },
-      { pos: [-15, 1.5, 0], size: [2, 3, 6], color: 0x696969 },
-      { pos: [15, 1.5, 0], size: [2, 3, 6], color: 0x696969 },
-      { pos: [0, 1, -15], size: [8, 2, 2], color: 0x808080 },
-    ];
-
-    obstacles.forEach(obs => {
-      createWall(obs.pos[0], obs.pos[1], obs.pos[2], obs.size[0], obs.size[1], obs.size[2], obs.color);
-    });
-
-    // --- ВРАГИ ---
-    const enemies = [];
-    
-    function createEnemy(x, z) {
-      const geometry = new THREE.BoxGeometry(1, 2, 1);
-      const material = new THREE.MeshStandardMaterial({ color: 0xff3333, roughness: 0.4 });
-      const enemy = new THREE.Mesh(geometry, material);
-      enemy.position.set(x, 1, z);
-      enemy.castShadow = true;
-      enemy.receiveShadow = true;
-      enemy.userData = {
-        health: 100,
-        speed: 1.5 + Math.random() * 2,
-        detectionRange: 15,
-        attackRange: 2,
-        attackDamage: 10,
-        lastAttackTime: 0
-      };
-      
-      // Метка здоровья над врагом
-      const healthDiv = document.createElement('div');
-      healthDiv.textContent = '100%';
-      healthDiv.style.color = 'white';
-      healthDiv.style.fontWeight = 'bold';
-      healthDiv.style.textShadow = '1px 1px 2px black';
-      const label = new CSS2DObject(healthDiv);
-      label.position.set(0, 2.5, 0);
-      enemy.add(label);
-      enemy.userData.label = label;
-      
-      scene.add(enemy);
-      enemies.push(enemy);
-      return enemy;
-    }
-
-    // Расставляем врагов
-    createEnemy(-12, -12);
-    createEnemy(12, -12);
-    createEnemy(-12, 12);
-    createEnemy(12, 12);
-    createEnemy(0, -18);
-    
-    updateUI();
-
-    // --- ИСКУССТВЕННЫЙ ИНТЕЛЛЕКТ ВРАГОВ ---
-    function updateEnemies(deltaTime) {
-      const playerPos = camera.position;
-      
-      enemies.forEach(enemy => {
-        const enemyPos = enemy.position;
-        const distanceToPlayer = enemyPos.distanceTo(playerPos);
+        // ---------- ИГРОВЫЕ ПАРАМЕТРЫ ----------
+        let score = 0;
+        let misses = 0;
+        let gameActive = true;
+        let combo = 0;
+        let lastBeatFrame = 0;
         
-        // Обновляем метку здоровья
-        const healthPercent = Math.max(0, enemy.userData.health);
-        enemy.userData.label.element.textContent = Math.ceil(healthPercent) + '%';
+        // Ритмические круги (targets)
+        let targets = [];
+        let frame = 0;
+        let beatInterval = 80;      // через сколько кадров появляется новый круг (чем меньше, тем быстрее)
+        let nextBeatCounter = 10;    // начальный отсчёт до бита
         
-        if (distanceToPlayer < enemy.userData.detectionRange) {
-          // Враг видит игрока и движется к нему
-          const direction = new THREE.Vector3()
-            .subVectors(playerPos, enemyPos)
-            .normalize();
-          
-          // Смотрим на игрока
-          enemy.lookAt(playerPos.x, enemyPos.y, playerPos.z);
-          
-          if (distanceToPlayer > enemy.userData.attackRange) {
-            // Движение к игроку
-            const moveAmount = enemy.userData.speed * deltaTime;
-            enemy.position.x += direction.x * moveAmount;
-            enemy.position.z += direction.z * moveAmount;
-          } else {
-            // Атака игрока
-            const now = Date.now();
-            if (now - enemy.userData.lastAttackTime > 1000) {
-              enemy.userData.lastAttackTime = now;
-              playerHealth -= enemy.userData.attackDamage;
-              updateUI();
-              
-              // Эффект получения урона (красная вспышка)
-              document.body.style.backgroundColor = 'rgba(255,0,0,0.3)';
-              setTimeout(() => document.body.style.backgroundColor = '', 100);
-              
-              if (playerHealth <= 0) {
-                alert('Вы погибли! Игра окончена.');
-                location.reload();
-              }
+        // Эффекты частиц
+        let particles = [];
+        
+        // Звуковой контекст (генерируем синт-бип)
+        let audioCtx = null;
+        let soundEnabled = false;
+        
+        function initAudio() {
+            if (audioCtx) return;
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            soundEnabled = true;
+        }
+        
+        function playPerfectSound() {
+            if (!soundEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 880;
+            gain.gain.value = 0.25;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+        
+        function playMissSound() {
+            if (!soundEnabled || !audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.frequency.value = 320;
+            gain.gain.value = 0.2;
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2);
+            osc.stop(audioCtx.currentTime + 0.2);
+        }
+        
+        // частицы после удара
+        function addBurst(x, y, color) {
+            for(let i=0; i<18; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 1;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                particles.push({
+                    x: x, y: y, vx: vx, vy: vy, life: 1.0,
+                    color: color || `hsl(${Math.random() * 60 + 180}, 100%, 60%)`,
+                    size: Math.random() * 4 + 2
+                });
             }
-          }
-        }
-      });
-    }
-
-    // --- ИГРОВОЙ ЦИКЛ ---
-    let clock = new THREE.Clock();
-
-    function animate() {
-      const deltaTime = Math.min(clock.getDelta(), 0.1); // Ограничиваем дельту
-      
-      if (controls.isLocked) {
-        // Обработка движения
-        playerVelocity.set(0, 0, 0);
-        playerDirection.set(0, 0, 0);
-        
-        const speed = keyState.shift ? moveSpeed * 1.5 : moveSpeed;
-        
-        if (keyState.w) playerDirection.z -= 1;
-        if (keyState.s) playerDirection.z += 1;
-        if (keyState.a) playerDirection.x -= 1;
-        if (keyState.d) playerDirection.x += 1;
-        
-        if (playerDirection.length() > 0) {
-          playerDirection.normalize();
-          playerVelocity.x = playerDirection.x * speed * deltaTime;
-          playerVelocity.z = playerDirection.z * speed * deltaTime;
-          
-          controls.moveRight(playerVelocity.x);
-          controls.moveForward(-playerVelocity.z);
         }
         
-        // Простая система "прыжка" (Space)
-        if (keyState.space && camera.position.y <= 1.6) {
-          // Можно добавить физику прыжка
+        // создать цель (пульсирующий круг)
+        function addTarget() {
+            if (!gameActive) return;
+            const radius = 30 + Math.sin(Date.now() * 0.008) * 4;
+            targets.push({
+                x: Math.random() * (canvas.width - 100) + 50,
+                y: Math.random() * (canvas.height - 100) + 50,
+                radius: 28,
+                life: 1.0,     // 1 -> уменьшается, при 0 пропускаем (мисс)
+                createdAt: frame,
+                maxLife: 70     // через 70 кадров цель исчезнет, если не кликнуть
+            });
         }
         
-        // Обновление врагов
-        updateEnemies(deltaTime);
-      }
-      
-      // Рендеринг
-      renderer.render(scene, camera);
-      labelRenderer.render(scene, camera);
-      
-      requestAnimationFrame(animate);
-    }
-
-    // Обработка изменения размера окна
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      labelRenderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // Запуск игры
-    animate();
-    
-    console.log('Игра готова! Кликните для захвата курсора.');
-  </script>
+        // обновить миссы и цели
+        function updateGame() {
+            if (!gameActive) return;
+            
+            // Генерация целей в ритме
+            nextBeatCounter--;
+            if (nextBeatCounter <= 0) {
+                addTarget();
+                nextBeatCounter = beatInterval;
+                // ритм становится чуть плотнее с ростом счёта
+                beatInterval = Math.max(40, 80 - Math.floor(score / 20));
+            }
+            
+            // обновление существующих целей (уменьшаем жизнь)
+            for(let i=0; i<targets.length; i++) {
+                targets[i].life -= 1 / targets[i].maxLife;
+                if(targets[i].life <= 0) {
+                    // ПРОПУСК -> МИСС
+                    targets.splice(i,1);
+                    i--;
+                    misses++;
+                    document.getElementById('missValue').innerText = misses;
+                    playMissSound();
+                    addBurst(canvas.width/2 + (Math.random()-0.5)*200, canvas.height/2 + (Math.random()-0.5)*150, "#ff3366");
+                    combo = 0;
+                    if(misses >= 3) {
+                        gameActive = false;
+                    }
+                }
+            }
+        }
+        
+        // обработка клика/касания — точка попадания
+        function handleTap(e) {
+            if (!gameActive) return;
+            e.preventDefault();
+            
+            // Включаем звук по первому касанию (требование браузера)
+            if (!audioCtx) {
+                initAudio();
+                audioCtx.resume();
+            } else if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            
+            // координаты касания относительно canvas
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX, clientY;
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            const canvasX = (clientX - rect.left) * scaleX;
+            const canvasY = (clientY - rect.top) * scaleY;
+            
+            let hit = false;
+            for(let i=0; i<targets.length; i++) {
+                const t = targets[i];
+                const dx = canvasX - t.x;
+                const dy = canvasY - t.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist < t.radius) {
+                    // ПОПАДАНИЕ!
+                    hit = true;
+                    targets.splice(i,1);
+                    score++;
+                    combo++;
+                    document.getElementById('scoreValue').innerText = score;
+                    playPerfectSound();
+                    addBurst(t.x, t.y, "#88ffcc");
+                    // маленький бонус: частицы радости
+                    for(let s=0;s<8;s++) {
+                        particles.push({
+                            x: t.x, y: t.y, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4-2,
+                            life: 0.9, color: `hsl(${Math.random()*80 + 160}, 100%, 65%)`, size: 3
+                        });
+                    }
+                    break;
+                }
+            }
+            if(!hit && gameActive) {
+                // промах мимо круга – лёгкий штраф (не мисс, но сбрасываем комбо)
+                combo = 0;
+                addBurst(canvasX, canvasY, "#ffaa44");
+            }
+        }
+        
+        // обновить физику частиц
+        function updateParticles() {
+            for(let i=0; i<particles.length; i++) {
+                particles[i].x += particles[i].vx;
+                particles[i].y += particles[i].vy;
+                particles[i].vy += 0.15;
+                particles[i].life -= 0.02;
+                if(particles[i].life <= 0 || particles[i].y > canvas.height+50 || particles[i].x < -50 || particles[i].x > canvas.width+100) {
+                    particles.splice(i,1);
+                    i--;
+                }
+            }
+        }
+        
+        // ---------- ОТРИСОВКА (вау-эффекты) ----------
+        function draw() {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // мерцающий фон
+            const grad = ctx.createLinearGradient(0,0, canvas.width, canvas.height);
+            grad.addColorStop(0, `hsl(220, 80%, ${5+Math.sin(frame*0.02)*2}%)`);
+            grad.addColorStop(1, `hsl(260, 70%, ${4+Math.cos(frame*0.03)*1.5}%)`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(0,0, canvas.width, canvas.height);
+            
+            // звёздное поле (движущиеся)
+            for(let i=0;i<150;i++) {
+                let x = (i*131)%canvas.width;
+                let y = (i*253 + frame)%canvas.height;
+                ctx.fillStyle = `rgba(255,240,200,${0.3+Math.sin(frame*0.02+i)*0.2})`;
+                ctx.beginPath();
+                ctx.arc(x,y,1.5,0,Math.PI*2);
+                ctx.fill();
+            }
+            
+            // цели: пульсирующие круги с неоном
+            for(let t of targets) {
+                const pulse = 0.8 + Math.sin(frame * 0.2) * 0.2;
+                const rad = t.radius * (0.7 + t.life * 0.3);
+                ctx.shadowBlur = 18;
+                ctx.shadowColor = "#0ff";
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, rad, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(0, 210, 255, ${0.5 + Math.sin(frame*0.15)*0.2})`;
+                ctx.fill();
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, rad-5, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 255, 200, 0.9)`;
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(t.x, t.y, rad-10, 0, Math.PI*2);
+                ctx.fillStyle = `#ffffff`;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            
+            // частицы
+            for(let p of particles) {
+                ctx.globalAlpha = p.life * 0.9;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.rect(p.x-2, p.y-2, p.size, p.size);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            
+            // центральный указатель (плавный)
+            ctx.shadowBlur = 14;
+            ctx.font = "bold 24px 'Orbitron', monospace";
+            ctx.fillStyle = `rgba(0, 255, 200, ${0.7+Math.sin(frame*0.1)*0.3})`;
+            ctx.shadowColor = "#0ff";
+            ctx.fillText("⚡ TAP", canvas.width/2-50, canvas.height-40);
+            
+            if (!gameActive) {
+                ctx.font = "bold 38 monospace";
+                ctx.fillStyle = "#ff44aa";
+                ctx.shadowBlur = 16;
+                ctx.fillText("💀 GAME OVER", canvas.width/2-140, canvas.height/2);
+                ctx.font = "18px monospace";
+                ctx.fillStyle = "cyan";
+                ctx.fillText("нажмите NEXUS", canvas.width/2-80, canvas.height/2+60);
+            }
+            ctx.shadowBlur = 0;
+        }
+        
+        function gameLoop() {
+            if(gameActive) {
+                updateGame();
+                updateParticles();
+            } else {
+                updateParticles();
+            }
+            draw();
+            frame++;
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // рестарт
+        function restartGame() {
+            score = 0;
+            misses = 0;
+            gameActive = true;
+            targets = [];
+            particles = [];
+            combo = 0;
+            frame = 0;
+            beatInterval = 78;
+            nextBeatCounter = 6;
+            document.getElementById('scoreValue').innerText = "0";
+            document.getElementById('missValue').innerText = "0";
+            if(audioCtx && audioCtx.state !== 'running') {
+                audioCtx.resume();
+            }
+        }
+        
+        // события для телефона + мыши
+        canvas.addEventListener('touchstart', handleTap, {passive: false});
+        canvas.addEventListener('mousedown', handleTap);
+        
+        const restartBtn = document.getElementById('restartButton');
+        restartBtn.addEventListener('click', () => {
+            restartGame();
+        });
+        restartBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            restartGame();
+        });
+        
+        // начальный старт
+        restartGame();
+        gameLoop();
+        
+        // разблокировка звука при касании canvas
+        canvas.addEventListener('touchstart', () => {
+            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        }, {once: true});
+    })();
+</script>
 </body>
-    </html>
+  </html>
