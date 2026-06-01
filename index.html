@@ -3,471 +3,543 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>✨ NEXUS — ритм-игра (телефон/ПК) ✨</title>
+    <title>Brawl Lite - мобильная аркада</title>
     <style>
         * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
+            touch-action: none; /* отключаем прокрутку при касаниях */
+            box-sizing: border-box;
         }
 
         body {
+            margin: 0;
             min-height: 100vh;
-            background: radial-gradient(circle at center, #0a0f1e 0%, #03050a 100%);
+            background: #0a0f1c;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', 'Orbitron', monospace;
-            overflow: hidden;
-            padding: 12px;
+            font-family: 'Segoe UI', system-ui, -apple-system, 'Impact', sans-serif;
+            touch-action: pan-y pinch-zoom; /* сохраняем вертикальную прокрутку если нужно */
         }
 
+        /* контейнер игры фиксированного размера, как экран телефона */
         .game-wrapper {
-            position: relative;
-            border-radius: 32px;
-            padding: 8px;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            box-shadow: 0 0 40px rgba(0,255,255,0.2);
-            width: min(95vw, 95vh);
-            max-width: 800px;
+            background: #1a1f2e;
+            border-radius: 48px;
+            padding: 12px;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
         }
 
         canvas {
             display: block;
             margin: 0 auto;
-            border-radius: 28px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+            border-radius: 32px;
             cursor: pointer;
+            background: #2a3342;
+            box-shadow: inset 0 0 10px #00000030, 0 8px 20px black;
             width: 100%;
             height: auto;
-            background-color: #03050c;
         }
 
-        .hud {
-            position: absolute;
-            top: 16px;
-            left: 0;
-            right: 0;
+        /* панель статуса */
+        .status-bar {
             display: flex;
             justify-content: space-between;
-            padding: 0 16px;
-            pointer-events: none;
-            z-index: 10;
-            text-shadow: 0 0 8px cyan;
-        }
-
-        .score-card, .miss-card {
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            padding: 8px 18px;
-            border-radius: 60px;
-            font-size: 1.4rem;
-            font-weight: bold;
-            font-family: monospace;
-            letter-spacing: 2px;
-            color: #0ff;
-            box-shadow: 0 0 12px rgba(0,255,255,0.6);
-            border: 1px solid cyan;
-        }
-
-        .miss-card {
-            color: #ff66cc;
-            border-color: #ff66cc;
-            box-shadow: 0 0 10px #ff66cc;
-        }
-
-        .restart-btn {
-            position: absolute;
-            bottom: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.85);
-            border: 2px solid cyan;
-            color: cyan;
-            font-size: 1rem;
-            font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 48px;
-            cursor: pointer;
+            align-items: center;
+            background: #0f121cb3;
             backdrop-filter: blur(8px);
-            transition: 0.2s;
-            font-family: monospace;
-            z-index: 20;
-            pointer-events: auto;
-            touch-action: manipulation;
-            white-space: nowrap;
+            padding: 8px 20px;
+            border-radius: 60px;
+            margin-bottom: 12px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 1px 2px black;
         }
 
-        .restart-btn:active {
-            transform: translateX(-50%) scale(0.96);
-            background: cyan;
+        .trophies, .coins {
+            background: #ffcd4a;
+            color: #3b2a1f;
+            padding: 5px 16px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.2rem;
+        }
+
+        .coins {
+            background: #f5b042;
+        }
+
+        .brawler-name {
+            background: #2c2f3e;
+            padding: 5px 16px;
+            border-radius: 40px;
+            font-size: 0.9rem;
+        }
+
+        /* меню режимов и магазин */
+        .menu-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            justify-content: center;
+        }
+
+        button {
+            background: #2f3545;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+            flex: 1;
+            max-width: 130px;
+            box-shadow: 0 3px 0 #121520;
+            transition: 0.07s linear;
+            touch-action: manipulation;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #121520;
+        }
+
+        .shop-panel {
+            background: #1e2438cc;
+            backdrop-filter: blur(12px);
+            border-radius: 48px;
+            margin-top: 12px;
+            padding: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .skin-item {
+            background: #00000066;
+            border-radius: 60px;
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .skin-buy {
+            background: gold;
             color: black;
+            border: none;
+            border-radius: 30px;
+            padding: 4px 12px;
+            font-weight: bold;
+        }
+
+        .selected-skin {
+            background: #4c6ef5;
+            color: white;
+            box-shadow: 0 0 0 2px white;
+        }
+
+        .mode-active {
+            background: #e67e22;
+            box-shadow: 0 0 8px orange;
         }
 
         @media (max-width: 600px) {
-            .score-card, .miss-card {
-                padding: 5px 14px;
-                font-size: 1rem;
-            }
-            .restart-btn {
-                padding: 8px 16px;
-                font-size: 0.85rem;
-                bottom: 12px;
-            }
-            .hud {
-                top: 8px;
-                padding: 0 12px;
-            }
+            button { font-size: 0.7rem; padding: 8px 12px; }
+            .status-bar { font-size: 0.7rem; }
+            .skin-item { font-size: 0.7rem; }
         }
     </style>
 </head>
 <body>
-<div class="game-wrapper">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div class="hud">
-        <div class="score-card">✨ <span id="scoreValue">0</span></div>
-        <div class="miss-card">💔 <span id="missValue">0</span> / 3</div>
+<div>
+    <div class="game-wrapper">
+        <div class="status-bar">
+            <div class="brawler-name" id="brawlerName">🗡️ Кольт</div>
+            <div class="trophies">🏆 <span id="trophyCount">0</span></div>
+            <div class="coins">🪙 <span id="coinCount">50</span></div>
+        </div>
+        <canvas id="gameCanvas" width="600" height="600" style="width:100%; height:auto; max-width:600px; aspect-ratio:1/1"></canvas>
+        <div class="menu-row">
+            <button id="modeSoloBtn" class="mode-active">⚔️ Соло</button>
+            <button id="modeDuoBtn">👥 Дуо (бот-напарник)</button>
+            <button id="shopToggleBtn">🛒 Магазин скинов</button>
+        </div>
+        <div id="shopPanel" style="display: none;" class="shop-panel">
+            <div class="skin-item">🔫 Кольт <button data-skin="colt" class="skin-buy">свой</button></div>
+            <div class="skin-item">🔥 Шелли (огненная)<button data-skin="shelly" class="skin-buy">30 🪙</button></div>
+            <div class="skin-item">❄️ Фрост (ледяной)<button data-skin="frost" class="skin-buy">50 🪙</button></div>
+            <div class="skin-item">👑 Король Булл<button data-skin="bull" class="skin-buy">80 🪙</button></div>
+        </div>
+        <div style="font-size: 11px; text-align: center; color: #aaa; margin-top: 12px;">👆 Ведите пальцем по экрану → движение | автоатака по ближ. врагу</div>
     </div>
-    <button class="restart-btn" id="restartButton">⟳ NEXUS</button>
 </div>
 
 <script>
     (function(){
+        // ---------- НАСТРОЙКИ ----------
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // адаптация под экран (сохраняем пропорции 800x600)
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            const maxW = Math.min(window.innerWidth - 32, 800);
-            const maxH = Math.min(window.innerHeight - 120, 600);
-            const scale = Math.min(maxW / 800, maxH / 600);
-            const displayW = 800 * scale;
-            const displayH = 600 * scale;
-            canvas.style.width = `${displayW}px`;
-            canvas.style.height = `${displayH}px`;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // ---------- ИГРОВЫЕ ПАРАМЕТРЫ ----------
-        let score = 0;
-        let misses = 0;
-        let gameActive = true;
-        let combo = 0;
-        let lastBeatFrame = 0;
+        let width = 600, height = 600;
+        canvas.width = width; canvas.height = height;
         
-        // Ритмические круги (targets)
-        let targets = [];
+        // ------ ИГРОВЫЕ ДАННЫЕ ------
+        let mode = "solo"; // solo / duo
+        let trophies = 0;
+        let coins = 50;
+        let currentSkin = "colt"; // colt, shelly, frost, bull
+        let skinsOwned = ["colt"]; // стартовый скин
+        let selectedBrawlerName = "Кольт";
+        
+        // игрок
+        let player = {
+            x: width/2, y: height/2,
+            hp: 5, maxHp: 5,
+            radius: 18,
+            attackCd: 0,
+            attackDelay: 18, // кадров между выстрелами
+            color: "#3b82f6"
+        };
+        
+        // враги и снаряды
+        let enemies = [];
+        let projectiles = []; // дружественные пули
+        let ally = null; // напарник для дуо-режима
+        
+        let gameOver = false;
+        let winFlag = false;
         let frame = 0;
-        let beatInterval = 80;      // через сколько кадров появляется новый круг (чем меньше, тем быстрее)
-        let nextBeatCounter = 10;    // начальный отсчёт до бита
+        let respawnTimer = 0;
         
-        // Эффекты частиц
-        let particles = [];
+        // управление касанием/мышкой
+        let touchActive = false;
+        let targetX = player.x, targetY = player.y;
         
-        // Звуковой контекст (генерируем синт-бип)
-        let audioCtx = null;
-        let soundEnabled = false;
-        
-        function initAudio() {
-            if (audioCtx) return;
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            soundEnabled = true;
+        // ---------- функции скинов ----------
+        function applySkinColor(){
+            switch(currentSkin){
+                case "colt": player.color = "#3b82f6"; selectedBrawlerName = "Кольт"; break;
+                case "shelly": player.color = "#ff784b"; selectedBrawlerName = "Шелли 🔥"; break;
+                case "frost": player.color = "#62e0ff"; selectedBrawlerName = "Фрост ❄️"; break;
+                case "bull": player.color = "#d4af37"; selectedBrawlerName = "Король Булл 👑"; break;
+                default: player.color = "#3b82f6";
+            }
+            document.getElementById('brawlerName').innerText = `⚔️ ${selectedBrawlerName}`;
         }
         
-        function playPerfectSound() {
-            if (!soundEnabled || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.frequency.value = 880;
-            gain.gain.value = 0.25;
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3);
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-        
-        function playMissSound() {
-            if (!soundEnabled || !audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.frequency.value = 320;
-            gain.gain.value = 0.2;
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.2);
-            osc.stop(audioCtx.currentTime + 0.2);
-        }
-        
-        // частицы после удара
-        function addBurst(x, y, color) {
-            for(let i=0; i<18; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 3 + 1;
-                const vx = Math.cos(angle) * speed;
-                const vy = Math.sin(angle) * speed;
-                particles.push({
-                    x: x, y: y, vx: vx, vy: vy, life: 1.0,
-                    color: color || `hsl(${Math.random() * 60 + 180}, 100%, 60%)`,
-                    size: Math.random() * 4 + 2
-                });
+        function buySkin(skinId, price){
+            if(skinsOwned.includes(skinId)) {
+                // уже есть, просто выбираем
+                currentSkin = skinId;
+                applySkinColor();
+                return true;
+            }
+            if(coins >= price){
+                coins -= price;
+                skinsOwned.push(skinId);
+                currentSkin = skinId;
+                applySkinColor();
+                updateUI();
+                return true;
+            } else {
+                alert("Не хватает монет! Сражайтесь и побеждайте!");
+                return false;
             }
         }
         
-        // создать цель (пульсирующий круг)
-        function addTarget() {
-            if (!gameActive) return;
-            const radius = 30 + Math.sin(Date.now() * 0.008) * 4;
-            targets.push({
-                x: Math.random() * (canvas.width - 100) + 50,
-                y: Math.random() * (canvas.height - 100) + 50,
-                radius: 28,
-                life: 1.0,     // 1 -> уменьшается, при 0 пропускаем (мисс)
-                createdAt: frame,
-                maxLife: 70     // через 70 кадров цель исчезнет, если не кликнуть
+        // обновить интерфейс
+        function updateUI(){
+            document.getElementById('trophyCount').innerText = trophies;
+            document.getElementById('coinCount').innerText = coins;
+        }
+        
+        // спавн врагов
+        function spawnEnemy(){
+            let side = Math.floor(Math.random() * 4);
+            let x, y;
+            const pad = 40;
+            if(side === 0){ x = Math.random() * width; y = -pad; }
+            if(side === 1){ x = width + pad; y = Math.random() * height; }
+            if(side === 2){ x = Math.random() * width; y = height + pad; }
+            if(side === 3){ x = -pad; y = Math.random() * height; }
+            x = Math.min(width+20, Math.max(-20, x));
+            y = Math.min(height+20, Math.max(-20, y));
+            enemies.push({
+                x: x, y: y, hp: 2, maxHp: 2, radius: 16,
+                speed: 1.2, color: "#e34d4d", attackTimer: 0
             });
         }
         
-        // обновить миссы и цели
-        function updateGame() {
-            if (!gameActive) return;
-            
-            // Генерация целей в ритме
-            nextBeatCounter--;
-            if (nextBeatCounter <= 0) {
-                addTarget();
-                nextBeatCounter = beatInterval;
-                // ритм становится чуть плотнее с ростом счёта
-                beatInterval = Math.max(40, 80 - Math.floor(score / 20));
+        // запуск битвы / ресет
+        function startBattle(){
+            gameOver = false;
+            winFlag = false;
+            player.hp = player.maxHp;
+            player.x = width/2;
+            player.y = height/2;
+            targetX = player.x;
+            targetY = player.y;
+            enemies = [];
+            projectiles = [];
+            ally = null;
+            if(mode === "duo"){
+                ally = {
+                    x: player.x - 40, y: player.y - 30, hp: 4, maxHp: 4, radius: 16,
+                    attackCd: 0, attackDelay: 25, color: "#66bb6a"
+                };
             }
-            
-            // обновление существующих целей (уменьшаем жизнь)
-            for(let i=0; i<targets.length; i++) {
-                targets[i].life -= 1 / targets[i].maxLife;
-                if(targets[i].life <= 0) {
-                    // ПРОПУСК -> МИСС
-                    targets.splice(i,1);
-                    i--;
-                    misses++;
-                    document.getElementById('missValue').innerText = misses;
-                    playMissSound();
-                    addBurst(canvas.width/2 + (Math.random()-0.5)*200, canvas.height/2 + (Math.random()-0.5)*150, "#ff3366");
-                    combo = 0;
-                    if(misses >= 3) {
-                        gameActive = false;
-                    }
-                }
+            // спавн 3-5 врагов
+            let enemyCount = 3 + Math.floor(Math.random() * 3) + (mode==="duo"?1:0);
+            for(let i=0;i<enemyCount;i++) spawnEnemy();
+            respawnTimer = 0;
+        }
+        
+        // Победа / поражение
+        function checkWinLose(){
+            if(gameOver) return;
+            if(player.hp <= 0){
+                gameOver = true;
+                winFlag = false;
+                return;
+            }
+            if(enemies.length === 0 && (mode !== "duo" || (ally && ally.hp > 0) || mode==="solo")){
+                // победа
+                gameOver = true;
+                winFlag = true;
+                let trophiesGain = 10 + Math.floor(Math.random() * 15);
+                let coinsGain = 15 + Math.floor(Math.random() * 20);
+                trophies += trophiesGain;
+                coins += coinsGain;
+                updateUI();
+                respawnTimer = 90; // небольшая задержка перед респавном врагов
+                return;
+            }
+            if(mode === "duo" && ally && ally.hp <= 0 && enemies.length > 0){
+                // напарник мёртв, но игрок жив - можно продолжать
             }
         }
         
-        // обработка клика/касания — точка попадания
-        function handleTap(e) {
-            if (!gameActive) return;
-            e.preventDefault();
-            
-            // Включаем звук по первому касанию (требование браузера)
-            if (!audioCtx) {
-                initAudio();
-                audioCtx.resume();
-            } else if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
+        // обновление игры
+        function updateGame(){
+            if(gameOver){
+                if(respawnTimer > 0){
+                    respawnTimer--;
+                    if(respawnTimer <= 0){
+                        startBattle();
+                    }
+                }
+                return;
             }
             
-            // координаты касания относительно canvas
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            let clientX, clientY;
-            if (e.touches) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
+            // движение игрока к касанию
+            let dx = targetX - player.x;
+            let dy = targetY - player.y;
+            let dist = Math.hypot(dx,dy);
+            let moveSpeed = 3.8;
+            if(dist > 1){
+                player.x += (dx/dist) * Math.min(moveSpeed, dist);
+                player.y += (dy/dist) * Math.min(moveSpeed, dist);
             }
+            // границы
+            player.x = Math.min(width - player.radius, Math.max(player.radius, player.x));
+            player.y = Math.min(height - player.radius, Math.max(player.radius, player.y));
             
-            const canvasX = (clientX - rect.left) * scaleX;
-            const canvasY = (clientY - rect.top) * scaleY;
+            // автоатака
+            if(player.attackCd <= 0){
+                let closest = null;
+                let minDist = 130;
+                for(let e of enemies){
+                    let d = Math.hypot(player.x - e.x, player.y - e.y);
+                    if(d < minDist){
+                        minDist = d;
+                        closest = e;
+                    }
+                }
+                if(closest){
+                    // стреляем
+                    let angle = Math.atan2(closest.y - player.y, closest.x - player.x);
+                    projectiles.push({
+                        x: player.x, y: player.y, radius: 6,
+                        vx: Math.cos(angle)*7, vy: Math.sin(angle)*7,
+                        damage: 1, life: 80, owner: "player"
+                    });
+                    player.attackCd = player.attackDelay;
+                }
+            } else player.attackCd--;
             
-            let hit = false;
-            for(let i=0; i<targets.length; i++) {
-                const t = targets[i];
-                const dx = canvasX - t.x;
-                const dy = canvasY - t.y;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-                if(dist < t.radius) {
-                    // ПОПАДАНИЕ!
-                    hit = true;
-                    targets.splice(i,1);
-                    score++;
-                    combo++;
-                    document.getElementById('scoreValue').innerText = score;
-                    playPerfectSound();
-                    addBurst(t.x, t.y, "#88ffcc");
-                    // маленький бонус: частицы радости
-                    for(let s=0;s<8;s++) {
-                        particles.push({
-                            x: t.x, y: t.y, vx: (Math.random()-0.5)*4, vy: (Math.random()-0.5)*4-2,
-                            life: 0.9, color: `hsl(${Math.random()*80 + 160}, 100%, 65%)`, size: 3
+            // напарник (дуо)
+            if(mode === "duo" && ally && ally.hp > 0){
+                // двигается к ближайшему врагу
+                let nearest = null;
+                let nearDist = 999;
+                for(let e of enemies){
+                    let d2 = Math.hypot(ally.x - e.x, ally.y - e.y);
+                    if(d2 < nearDist){ nearDist = d2; nearest = e; }
+                }
+                if(nearest){
+                    let dxA = nearest.x - ally.x;
+                    let dyA = nearest.y - ally.y;
+                    let len = Math.hypot(dxA,dyA);
+                    if(len > 1){
+                        ally.x += (dxA/len)*2.2;
+                        ally.y += (dyA/len)*2.2;
+                    }
+                } else {
+                    // слегка за игроком
+                    let toPx = player.x - ally.x;
+                    let toPy = player.y - ally.y;
+                    let lenP = Math.hypot(toPx,toPy);
+                    if(lenP>20){
+                        ally.x += (toPx/lenP)*1.5;
+                        ally.y += (toPy/lenP)*1.5;
+                    }
+                }
+                // границы
+                ally.x = Math.min(width - ally.radius, Math.max(ally.radius, ally.x));
+                ally.y = Math.min(height - ally.radius, Math.max(ally.radius, ally.y));
+                // атака напарника
+                if(ally.attackCd <= 0){
+                    let targetEnemy = null;
+                    let adist = 140;
+                    for(let e of enemies){
+                        let dA = Math.hypot(ally.x - e.x, ally.y - e.y);
+                        if(dA < adist){ adist = dA; targetEnemy = e;}
+                    }
+                    if(targetEnemy){
+                        let ang = Math.atan2(targetEnemy.y - ally.y, targetEnemy.x - ally.x);
+                        projectiles.push({
+                            x: ally.x, y: ally.y, radius: 5, vx: Math.cos(ang)*6, vy: Math.sin(ang)*6,
+                            damage: 1, life: 70, owner: "ally"
                         });
+                        ally.attackCd = ally.attackDelay;
                     }
-                    break;
+                } else ally.attackCd--;
+            }
+            
+            // снаряды
+            for(let i=0;i<projectiles.length;i++){
+                let p = projectiles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+                if(p.x<-50 || p.x>width+50 || p.y<-50 || p.y>height+50 || p.life<=0){
+                    projectiles.splice(i,1); i--; continue;
+                }
+                let hit = false;
+                if(p.owner === "player" || p.owner === "ally"){
+                    for(let j=0;j<enemies.length;j++){
+                        let e = enemies[j];
+                        let d = Math.hypot(p.x - e.x, p.y - e.y);
+                        if(d < e.radius+5){
+                            e.hp -= p.damage;
+                            hit=true;
+                            if(e.hp <= 0){
+                                enemies.splice(j,1);
+                                j--;
+                            }
+                            break;
+                        }
+                    }
+                }
+                if(hit){ projectiles.splice(i,1); i--; continue; }
+            }
+            
+            // враги двигаются к игроку или напарнику
+            for(let e of enemies){
+                let target = player;
+                if(mode==="duo" && ally && ally.hp>0){
+                    let distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
+                    let distToAlly = Math.hypot(e.x - ally.x, e.y - ally.y);
+                    if(distToAlly < distToPlayer && ally.hp>0) target = ally;
+                }
+                let dxE = target.x - e.x;
+                let dyE = target.y - e.y;
+                let lenE = Math.hypot(dxE,dyE);
+                if(lenE > 1){
+                    e.x += (dxE/lenE)*e.speed;
+                    e.y += (dyE/lenE)*e.speed;
+                }
+                // урон от столкновения с игроком
+                let dmgDist = player.radius + e.radius;
+                if(Math.hypot(player.x - e.x, player.y - e.y) < dmgDist && !gameOver){
+                    player.hp--;
+                    let angleKnock = Math.atan2(player.y - e.y, player.x - e.x);
+                    player.x += Math.cos(angleKnock)*25;
+                    player.y += Math.sin(angleKnock)*25;
+                    // откинуть врага
+                    e.x -= Math.cos(angleKnock)*18;
+                    e.y -= Math.sin(angleKnock)*18;
+                    if(player.hp <= 0) break;
+                }
+                if(mode==="duo" && ally && ally.hp>0 && Math.hypot(ally.x - e.x, ally.y - e.y) < ally.radius+e.radius){
+                    ally.hp--;
+                    let angK = Math.atan2(ally.y - e.y, ally.x - e.x);
+                    ally.x += Math.cos(angK)*25;
+                    ally.y += Math.sin(angK)*25;
+                    e.x -= Math.cos(angK)*15;
+                    e.y -= Math.sin(angK)*15;
                 }
             }
-            if(!hit && gameActive) {
-                // промах мимо круга – лёгкий штраф (не мисс, но сбрасываем комбо)
-                combo = 0;
-                addBurst(canvasX, canvasY, "#ffaa44");
-            }
+            
+            checkWinLose();
+            if(enemies.length < 2 && !gameOver && Math.random()<0.012) spawnEnemy();
         }
         
-        // обновить физику частиц
-        function updateParticles() {
-            for(let i=0; i<particles.length; i++) {
-                particles[i].x += particles[i].vx;
-                particles[i].y += particles[i].vy;
-                particles[i].vy += 0.15;
-                particles[i].life -= 0.02;
-                if(particles[i].life <= 0 || particles[i].y > canvas.height+50 || particles[i].x < -50 || particles[i].x > canvas.width+100) {
-                    particles.splice(i,1);
-                    i--;
-                }
-            }
-        }
-        
-        // ---------- ОТРИСОВКА (вау-эффекты) ----------
-        function draw() {
-            if(!ctx) return;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // мерцающий фон
-            const grad = ctx.createLinearGradient(0,0, canvas.width, canvas.height);
-            grad.addColorStop(0, `hsl(220, 80%, ${5+Math.sin(frame*0.02)*2}%)`);
-            grad.addColorStop(1, `hsl(260, 70%, ${4+Math.cos(frame*0.03)*1.5}%)`);
-            ctx.fillStyle = grad;
-            ctx.fillRect(0,0, canvas.width, canvas.height);
-            
-            // звёздное поле (движущиеся)
-            for(let i=0;i<150;i++) {
-                let x = (i*131)%canvas.width;
-                let y = (i*253 + frame)%canvas.height;
-                ctx.fillStyle = `rgba(255,240,200,${0.3+Math.sin(frame*0.02+i)*0.2})`;
+        // ОТРИСОВКА
+        function draw(){
+            ctx.clearRect(0,0,width,height);
+            // фон
+            ctx.fillStyle = "#213555";
+            ctx.fillRect(0,0,width,height);
+            for(let i=0;i<30;i++){
+                ctx.fillStyle = "#abc9ff30";
                 ctx.beginPath();
-                ctx.arc(x,y,1.5,0,Math.PI*2);
+                ctx.arc( (i*131)%width, (i*77)%height, 3,0,Math.PI*2);
                 ctx.fill();
             }
-            
-            // цели: пульсирующие круги с неоном
-            for(let t of targets) {
-                const pulse = 0.8 + Math.sin(frame * 0.2) * 0.2;
-                const rad = t.radius * (0.7 + t.life * 0.3);
-                ctx.shadowBlur = 18;
-                ctx.shadowColor = "#0ff";
+            // враги
+            for(let e of enemies){
+                ctx.fillStyle = e.color;
+                ctx.shadowBlur=8;
                 ctx.beginPath();
-                ctx.arc(t.x, t.y, rad, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(0, 210, 255, ${0.5 + Math.sin(frame*0.15)*0.2})`;
+                ctx.arc(e.x, e.y, e.radius,0,Math.PI*2);
                 ctx.fill();
-                ctx.shadowBlur = 8;
-                ctx.beginPath();
-                ctx.arc(t.x, t.y, rad-5, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(255, 255, 200, 0.9)`;
-                ctx.fill();
-                ctx.beginPath();
-                ctx.arc(t.x, t.y, rad-10, 0, Math.PI*2);
-                ctx.fillStyle = `#ffffff`;
-                ctx.fill();
-                ctx.shadowBlur = 0;
+                ctx.fillStyle="white";
+                ctx.font="bold 12px monospace";
+                ctx.fillText("❤️"+e.hp, e.x-12, e.y-8);
             }
-            
-            // частицы
-            for(let p of particles) {
-                ctx.globalAlpha = p.life * 0.9;
-                ctx.fillStyle = p.color;
+            // снаряды
+            for(let p of projectiles){
+                ctx.fillStyle = "#ffe484";
                 ctx.beginPath();
-                ctx.rect(p.x-2, p.y-2, p.size, p.size);
+                ctx.arc(p.x, p.y, 5,0,Math.PI*2);
                 ctx.fill();
             }
-            ctx.globalAlpha = 1;
-            
-            // центральный указатель (плавный)
-            ctx.shadowBlur = 14;
-            ctx.font = "bold 24px 'Orbitron', monospace";
-            ctx.fillStyle = `rgba(0, 255, 200, ${0.7+Math.sin(frame*0.1)*0.3})`;
-            ctx.shadowColor = "#0ff";
-            ctx.fillText("⚡ TAP", canvas.width/2-50, canvas.height-40);
-            
-            if (!gameActive) {
-                ctx.font = "bold 38 monospace";
-                ctx.fillStyle = "#ff44aa";
-                ctx.shadowBlur = 16;
-                ctx.fillText("💀 GAME OVER", canvas.width/2-140, canvas.height/2);
-                ctx.font = "18px monospace";
-                ctx.fillStyle = "cyan";
-                ctx.fillText("нажмите NEXUS", canvas.width/2-80, canvas.height/2+60);
+            // игрок
+            ctx.fillStyle = player.color;
+            ctx.shadowBlur=10;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius,0,Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle="white";
+            ctx.font="bold 14px monospace";
+            ctx.fillText("❤️"+player.hp, player.x-12, player.y-12);
+            // напарник
+            if(mode==="duo" && ally && ally.hp>0){
+                ctx.fillStyle = ally.color;
+                ctx.beginPath();
+                ctx.arc(ally.x, ally.y, ally.radius,0,Math.PI*2);
+                ctx.fill();
+                ctx.fillStyle="lightgreen";
+                ctx.fillText("🤝"+ally.hp, ally.x-12, ally.y-12);
             }
-            ctx.shadowBlur = 0;
-        }
-        
-        function gameLoop() {
-            if(gameActive) {
-                updateGame();
-                updateParticles();
-            } else {
-                updateParticles();
-            }
-            draw();
-            frame++;
-            requestAnimationFrame(gameLoop);
-        }
-        
-        // рестарт
-        function restartGame() {
-            score = 0;
-            misses = 0;
-            gameActive = true;
-            targets = [];
-            particles = [];
-            combo = 0;
-            frame = 0;
-            beatInterval = 78;
-            nextBeatCounter = 6;
-            document.getElementById('scoreValue').innerText = "0";
-            document.getElementById('missValue').innerText = "0";
-            if(audioCtx && audioCtx.state !== 'running') {
-                audioCtx.resume();
-            }
-        }
-        
-        // события для телефона + мыши
-        canvas.addEventListener('touchstart', handleTap, {passive: false});
-        canvas.addEventListener('mousedown', handleTap);
-        
-        const restartBtn = document.getElementById('restartButton');
-        restartBtn.addEventListener('click', () => {
-            restartGame();
-        });
-        restartBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            restartGame();
-        });
-        
-        // начальный старт
-        restartGame();
-        gameLoop();
-        
-        // разблокировка звука при касании canvas
-        canvas.addEventListener('touchstart', () => {
-            if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-        }, {once: true});
-    })();
-</script>
-</body>
-  </html>
+            // экран оконч
